@@ -1,0 +1,1506 @@
+--[[
+  SAHUR HUB  |  Murder Mystery 2 (MM2)
+  Version 1.0.0
+  Tabs: Main, Info, Visuals, Player, Combat, Farm, Teleports, Alerts, Misc, Fun, Keybinds, Configs
+  UI: WindUI
+]]
+print("[SAHUR] Loading Services")
+local VERSION = "1.0.0"
+local genv = (getgenv and getgenv()) or _G
+
+-- Si ya estaba cargado, se descarga la copia anterior
+if genv.SahurHubUnload then pcall(genv.SahurHubUnload) end
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+----------------------------------------------------
+-- Idioma (English por defecto) y deteccion de juego
+----------------------------------------------------
+local LANG = "en"
+pcall(function()
+    if isfile and readfile and isfile("SahurHub_Lang.txt") then
+        local l = readfile("SahurHub_Lang.txt"):gsub("%s+", "")
+        if l == "es" or l == "ru" or l == "en" then LANG = l end
+    end
+end)
+
+local function Msg(en, es, ru)
+    if LANG == "es" then return es elseif LANG == "ru" then return ru end
+    return en
+end
+
+do
+    local isMM2 = game.PlaceId == 142823291 or game.GameId == 66654135
+    if not isMM2 then
+        pcall(function()
+            LocalPlayer:Kick(Msg(
+                "This script is only for Murder Mystery 2. Join MM2 and execute it correctly.",
+                "Este script es solo para MM2, entra a Murder Mystery 2 y ejecútalo correctamente",
+                "Этот скрипт только для Murder Mystery 2. Зайдите в MM2 и запустите его правильно."))
+        end)
+        return
+    end
+end
+
+pcall(function()
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Sahur Hub",
+        Text = Msg("Script started, loading UI...", "Script iniciado, cargando UI...", "Скрипт запущен, загрузка UI..."),
+        Duration = 6,
+    })
+end)
+
+print("[SAHUR] Loading Icon")
+----------------------------------------------------
+-- ICON LOADER
+-- El ID suele ser un DECAL. assetdelivery devuelve XML para decals (no un PNG),
+-- asi que se resuelve el ID real de la imagen y se valida que sea un PNG de verdad.
+----------------------------------------------------
+local ICON_ID = 96933717122317
+local ICON_FILE = "SahurHub_Icon.png"
+local FALLBACK_ICON = "skull" -- icono lucide, siempre funciona
+
+local function IsPng(data)
+    return type(data) == "string" and #data > 8 and data:sub(2, 4) == "PNG"
+end
+
+local function ResolveImageId(id)
+    local ok, result = pcall(function()
+        local obj = game:GetObjects("rbxassetid://" .. id)[1]
+        if obj then
+            local tex = obj.Texture or obj.Image or obj.ColorMapContent
+            if tex then
+                return tostring(tex):match("id=(%d+)") or tostring(tex):match("(%d+)$")
+            end
+        end
+    end)
+    if ok and result then return result end
+    return tostring(id)
+end
+
+local function GetIconAsset()
+    local canFile = isfile and writefile and readfile and getcustomasset
+
+    if canFile and isfile(ICON_FILE) then
+        local ok, data = pcall(readfile, ICON_FILE)
+        if ok and IsPng(data) then
+            local ok2, asset = pcall(getcustomasset, ICON_FILE)
+            if ok2 and asset then return asset end
+        elseif delfile then
+            pcall(delfile, ICON_FILE) -- archivo corrupto de intentos anteriores
+        end
+    end
+
+    local imageId = ResolveImageId(ICON_ID)
+
+    if canFile then
+        local ok, data = pcall(function()
+            return game:HttpGet("https://assetdelivery.roblox.com/v1/asset/?id=" .. imageId)
+        end)
+        if ok and IsPng(data) then
+            pcall(writefile, ICON_FILE, data)
+            local ok2, asset = pcall(getcustomasset, ICON_FILE)
+            if ok2 and asset then return asset end
+        end
+    end
+
+    if imageId and imageId ~= tostring(ICON_ID) then
+        return "rbxassetid://" .. imageId
+    end
+    return FALLBACK_ICON
+end
+
+local IconAsset = FALLBACK_ICON
+pcall(function()
+    -- Solo usa el PNG ya cacheado (instantaneo). Nunca espera a la red.
+    if isfile and readfile and getcustomasset and isfile(ICON_FILE) then
+        local data = readfile(ICON_FILE)
+        if IsPng(data) then
+            local asset = getcustomasset(ICON_FILE)
+            if asset then IconAsset = asset end
+        end
+    end
+end)
+-- Descarga/cachea el icono en segundo plano para la proxima ejecucion
+task.spawn(function() pcall(GetIconAsset) end)
+
+----------------------------------------------------
+-- EXECUTION COUNTER + EXECUTOR
+----------------------------------------------------
+local ExecCountFile = "SahurHub_ExecCount.txt"
+local executionCount = 1
+if isfile and readfile and writefile then
+    if isfile(ExecCountFile) then
+        local ok, raw = pcall(readfile, ExecCountFile)
+        local current = ok and tonumber(raw)
+        if current then executionCount = current + 1 end
+    end
+    pcall(writefile, ExecCountFile, tostring(executionCount))
+end
+
+local currentExecutor = "Unknown Executor"
+if identifyexecutor then
+    currentExecutor = identifyexecutor()
+elseif getexecutorname then
+    currentExecutor = getexecutorname()
+end
+
+print("[SAHUR] Loading WindUI")
+----------------------------------------------------
+-- LOAD WINDUI (con pcall, varias fuentes y stubs para ejecutores moviles)
+----------------------------------------------------
+local WindUI, Window = (function()
+    local env = genv
+
+    local permanent = {
+        isfolder  = function() return false end,
+        makefolder = function() end,
+        cloneref  = function(o) return o end,
+        gethui    = function() return game:GetService("CoreGui") end,
+    }
+    local temporary = {
+        isfile    = function() return false end,
+        readfile  = function() return "" end,
+        writefile = function() end,
+        listfiles = function() return {} end,
+        delfile   = function() end,
+        delfolder = function() end,
+    }
+    local addedTemp = {}
+    for name, fn in pairs(permanent) do
+        if type(env[name]) ~= "function" then pcall(function() env[name] = fn end) end
+    end
+    for name, fn in pairs(temporary) do
+        if type(env[name]) ~= "function" then
+            local ok = pcall(function() env[name] = fn end)
+            if ok then addedTemp[#addedTemp + 1] = name end
+        end
+    end
+
+    local function notify(msg)
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", { Title = "Sahur Hub", Text = msg, Duration = 8 })
+        end)
+    end
+
+    local sources = {
+        "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua",
+        "https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua",
+        "https://github.com/Footagesus/WindUI/releases/download/1.6.41/main.lua",
+    }
+
+    local function withTimeout(seconds, fn)
+        local done, result = false, nil
+        task.spawn(function()
+            local ok, r = pcall(fn)
+            if ok then result = r end
+            done = true
+        end)
+        local t0 = os.clock()
+        while not done and os.clock() - t0 < seconds do task.wait(0.1) end
+        if not done then warn("[SAHUR] Timeout esperando WindUI") end
+        return result
+    end
+
+    local function tryLoadRaw(url)
+        local okGet, src = pcall(function() return game:HttpGet(url) end)
+        if not okGet or type(src) ~= "string" or #src < 1000 then
+            warn("[SAHUR] HttpGet fallo: " .. url .. " -> " .. tostring(src))
+            return nil
+        end
+        local fn, cerr = loadstring(src)
+        if type(fn) ~= "function" then
+            warn("[SAHUR] loadstring fallo: " .. url .. " -> " .. tostring(cerr))
+            return nil
+        end
+        local okRun, lib = pcall(fn)
+        if not okRun or type(lib) ~= "table" or type(lib.CreateWindow) ~= "function" then
+            warn("[SAHUR] WindUI invalido: " .. url .. " -> " .. tostring(lib))
+            return nil
+        end
+        return lib
+    end
+
+    local function makeWindow(lib, icon, full)
+        local cfg = {
+            Title = "Sahur Hub",
+            Icon = icon,
+            Author = "Murder Mystery 2",
+            Folder = "SahurHub_Configs",
+            Size = UDim2.fromOffset(580, 460),
+            Theme = "Dark",
+        }
+        if full then
+            cfg.Transparent = true
+            cfg.SideBarWidth = 170
+            cfg.HasOutline = true
+        end
+        return pcall(function() return lib:CreateWindow(cfg) end)
+    end
+
+    local lib, win
+    pcall(function()
+        if isfile and readfile and isfile("SahurHub_UILib.txt") then
+            local idx = ({ latest = 1, dist = 2, stable = 3 })[readfile("SahurHub_UILib.txt"):gsub("%s+", "")]
+            if idx and idx > 1 and sources[idx] then table.insert(sources, 1, table.remove(sources, idx)) end
+        end
+    end)
+    for _, url in ipairs(sources) do
+        local candidate = withTimeout(25, function() return tryLoadRaw(url) end)
+        if candidate then
+            local ok, w = makeWindow(candidate, IconAsset, true)
+            if not ok then
+                warn("[SAHUR] CreateWindow fallo (config completa): " .. tostring(w))
+                ok, w = makeWindow(candidate, FALLBACK_ICON, true)
+            end
+            if not ok then
+                warn("[SAHUR] CreateWindow fallo (icono fallback): " .. tostring(w))
+                ok, w = makeWindow(candidate, FALLBACK_ICON, false)
+            end
+            if ok and w then
+                lib, win = candidate, w
+                break
+            end
+            warn("[SAHUR] CreateWindow fallo (config minima): " .. tostring(w))
+        end
+    end
+
+    for _, name in ipairs(addedTemp) do
+        pcall(function() env[name] = nil end)
+    end
+
+    if not lib or not win then
+        warn("[SAHUR] No se pudo cargar WindUI desde ninguna fuente")
+        notify(Msg("Could not load the UI. Check your internet/executor and try again.",
+            "No se pudo cargar la UI. Revisa tu internet/ejecutor y reintenta.",
+            "Не удалось загрузить UI. Проверьте интернет/экзекутор и повторите."))
+        return nil, nil
+    end
+    return lib, win
+end)()
+
+if not WindUI or not Window then return end
+print("[SAHUR] WindUI loaded")
+
+----------------------------------------------------
+-- Estado compartido: Ex (valores), Setters, tabs de cada opcion, acciones de teclas
+----------------------------------------------------
+local Ex = {}
+local Setters = {}
+local KeyTab = {}   -- id -> tab (para el alcance de carga de las configs)
+local Actions = {}  -- id de tecla -> funcion
+local Conns = {}
+local FX = { LastKeySet = 0, HubOpen = true }
+local alive = true
+
+local function NotifyUI(title, content, dur)
+    pcall(function() WindUI:Notify({ Title = title, Content = content, Duration = dur or 2 }) end)
+end
+
+----------------------------------------------------
+-- Traduccion de la interfaz: se traducen los titulos (English es el idioma por defecto)
+----------------------------------------------------
+local I18N = {
+    es = {
+        ["Main"] = "Principal", ["Info"] = "Info", ["Visuals"] = "Visuales", ["Player"] = "Jugador",
+        ["Combat"] = "Combate", ["Farm"] = "Farmeo", ["Teleports"] = "Teletransportes", ["Alerts"] = "Alertas",
+        ["Misc"] = "Misc", ["Fun"] = "Diversión", ["Keybinds"] = "Teclas", ["Configs"] = "Configs",
+        ["What's New"] = "Lo nuevo", ["Features"] = "Funciones", ["Coming soon"] = "Próximamente",
+        ["Player Information"] = "Información del Jugador", ["User Profile"] = "Perfil de Usuario",
+        ["Live Session"] = "Sesión en Vivo", ["Session"] = "Sesión",
+        ["Script Information"] = "Información del Script", ["About Sahur Hub"] = "Acerca de Sahur Hub",
+        ["Where to find things"] = "Dónde encontrar cada cosa", ["Good to know"] = "Bueno saber",
+        ["Hub"] = "Hub", ["Open / Close Hub"] = "Abrir / Cerrar Hub",
+        ["Mobile Buttons"] = "Botones Móviles", ["Floating Buttons"] = "Botones Flotantes", ["Hub Button"] = "Botón del Hub",
+        ["Config Selector"] = "Selector de Configs", ["Select Saved Config"] = "Elegir Config Guardada",
+        ["Refresh Config List"] = "Actualizar Lista de Configs", ["Load Scope"] = "Alcance de Carga",
+        ["Load Selected Config"] = "Cargar Config Elegida", ["Overwrite Selected Config"] = "Sobrescribir Config Elegida",
+        ["Create New Config"] = "Crear Nueva Config", ["New Config Name"] = "Nombre de la Nueva Config",
+        ["Save New Config"] = "Guardar Nueva Config", ["Manage Configs"] = "Administrar Configs",
+        ["Rename To"] = "Renombrar a", ["Rename Selected Config"] = "Renombrar Config Elegida",
+        ["Duplicate Selected Config"] = "Duplicar Config Elegida", ["Delete Selected Config"] = "Borrar Config Elegida",
+        ["Set Selected As Auto-Load"] = "Poner Elegida como Auto-Carga", ["Clear Auto-Load"] = "Quitar Auto-Carga",
+        ["Share / Import"] = "Compartir / Importar", ["Generated Code"] = "Código Generado",
+        ["Share Selected Config"] = "Compartir Config Elegida", ["Share Current Settings"] = "Compartir Ajustes Actuales",
+        ["Upload Selected (Online Short Code)"] = "Subir Elegida (Código Corto Online)",
+        ["Upload Current (Online Short Code)"] = "Subir Actual (Código Corto Online)",
+        ["Import Code"] = "Importar Código", ["Save Imported As"] = "Guardar Importada Como",
+        ["Import & Apply"] = "Importar y Aplicar", ["Import & Save As New"] = "Importar y Guardar como Nueva",
+        ["Import From Clipboard (Apply)"] = "Importar del Portapapeles (Aplicar)",
+        ["Language"] = "Idioma", ["Interface"] = "Interfaz", ["UI Theme"] = "Tema de la UI",
+        ["UI Library"] = "Librería de UI", ["Destroy Script"] = "Destruir Script",
+    },
+    ru = {
+        ["Main"] = "Главная", ["Info"] = "Инфо", ["Visuals"] = "Визуал", ["Player"] = "Игрок",
+        ["Combat"] = "Бой", ["Farm"] = "Фарм", ["Teleports"] = "Телепорты", ["Alerts"] = "Оповещения",
+        ["Misc"] = "Разное", ["Fun"] = "Веселье", ["Keybinds"] = "Бинды", ["Configs"] = "Конфиги",
+        ["What's New"] = "Что нового", ["Features"] = "Функции", ["Coming soon"] = "Скоро",
+        ["Player Information"] = "Информация об игроке", ["User Profile"] = "Профиль",
+        ["Live Session"] = "Текущая сессия", ["Session"] = "Сессия",
+        ["Script Information"] = "Информация о скрипте", ["About Sahur Hub"] = "О Sahur Hub",
+        ["Where to find things"] = "Где что искать", ["Good to know"] = "Полезно знать",
+        ["Hub"] = "Хаб", ["Open / Close Hub"] = "Открыть / закрыть хаб",
+        ["Mobile Buttons"] = "Кнопки для телефона", ["Floating Buttons"] = "Плавающие кнопки", ["Hub Button"] = "Кнопка хаба",
+        ["Config Selector"] = "Выбор конфига", ["Select Saved Config"] = "Выбрать сохранённый конфиг",
+        ["Refresh Config List"] = "Обновить список конфигов", ["Load Scope"] = "Область загрузки",
+        ["Load Selected Config"] = "Загрузить выбранный конфиг", ["Overwrite Selected Config"] = "Перезаписать выбранный конфиг",
+        ["Create New Config"] = "Создать новый конфиг", ["New Config Name"] = "Имя нового конфига",
+        ["Save New Config"] = "Сохранить новый конфиг", ["Manage Configs"] = "Управление конфигами",
+        ["Rename To"] = "Новое имя", ["Rename Selected Config"] = "Переименовать выбранный конфиг",
+        ["Duplicate Selected Config"] = "Дублировать выбранный конфиг", ["Delete Selected Config"] = "Удалить выбранный конфиг",
+        ["Set Selected As Auto-Load"] = "Назначить автозагрузку", ["Clear Auto-Load"] = "Убрать автозагрузку",
+        ["Share / Import"] = "Поделиться / Импорт", ["Generated Code"] = "Созданный код",
+        ["Share Selected Config"] = "Поделиться выбранным конфигом", ["Share Current Settings"] = "Поделиться текущими настройками",
+        ["Upload Selected (Online Short Code)"] = "Загрузить выбранный (короткий код)",
+        ["Upload Current (Online Short Code)"] = "Загрузить текущие (короткий код)",
+        ["Import Code"] = "Импорт кода", ["Save Imported As"] = "Сохранить импорт как",
+        ["Import & Apply"] = "Импорт и применить", ["Import & Save As New"] = "Импорт и сохранить как новый",
+        ["Import From Clipboard (Apply)"] = "Импорт из буфера (применить)",
+        ["Language"] = "Язык", ["Interface"] = "Интерфейс", ["UI Theme"] = "Тема интерфейса",
+        ["UI Library"] = "Библиотека UI", ["Destroy Script"] = "Удалить скрипт",
+    },
+}
+
+do
+    local dict = LANG ~= "en" and I18N[LANG]
+    if dict then
+        local function tr(cfg)
+            if type(cfg) == "table" and type(cfg.Title) == "string" then
+                local t = dict[cfg.Title]
+                if t then cfg.Title = t end
+            end
+            if type(cfg) == "table" and type(cfg.Desc) == "string" then
+                local t = dict[cfg.Desc]
+                if t then cfg.Desc = t end
+            end
+        end
+        local METHODS = { "Section", "Button", "Toggle", "Slider", "Dropdown", "Input", "Keybind", "Colorpicker", "ColorPicker", "Paragraph" }
+        local origTab = Window.Tab
+        Window.Tab = function(self, cfg, ...)
+            tr(cfg)
+            local tab = origTab(self, cfg, ...)
+            if type(tab) == "table" then
+                for _, m in ipairs(METHODS) do
+                    local f = tab[m]
+                    if type(f) == "function" then
+                        tab[m] = function(s, c, ...) tr(c) return f(s, c, ...) end
+                    end
+                end
+            end
+            return tab
+        end
+    end
+end
+
+----------------------------------------------------
+-- Descarga completa del script
+----------------------------------------------------
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "SahurHub_Gui"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.DisplayOrder = 999
+do
+    local okParent = pcall(function() Gui.Parent = (gethui and gethui()) or game:GetService("CoreGui") end)
+    if not okParent then Gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+end
+
+local function KillAll()
+    if not alive then return end
+    alive = false
+    for _, c in ipairs(Conns) do pcall(function() c:Disconnect() end) end
+    pcall(function() Gui:Destroy() end)
+    pcall(function() Window:Destroy() end)
+    genv.SahurHubUnload = nil
+end
+genv.SahurHubUnload = KillAll
+
+----------------------------------------------------
+-- Tabs (orden fijo)
+----------------------------------------------------
+local MainTab      = Window:Tab({ Title = "Main",      Icon = "house" })
+local InfoTab      = Window:Tab({ Title = "Info",      Icon = "info" })
+local VisualsTab   = Window:Tab({ Title = "Visuals",   Icon = "eye" })
+local PlayerTab    = Window:Tab({ Title = "Player",    Icon = "user" })
+local CombatTab    = Window:Tab({ Title = "Combat",    Icon = "swords" })
+local FarmTab      = Window:Tab({ Title = "Farm",      Icon = "coins" })
+local TeleportsTab = Window:Tab({ Title = "Teleports", Icon = "map-pin" })
+local AlertsTab    = Window:Tab({ Title = "Alerts",    Icon = "bell" })
+local MiscTab      = Window:Tab({ Title = "Misc",      Icon = "ellipsis" })
+local FunTab       = Window:Tab({ Title = "Fun",       Icon = "smile" })
+local KeybindsTab  = Window:Tab({ Title = "Keybinds",  Icon = "keyboard" })
+local ConfigsTab   = Window:Tab({ Title = "Configs",   Icon = "settings" })
+
+-- Tabs sin funciones todavia: un aviso para que no queden en blanco
+local noFeaturesMsg = Msg("This tab has no features yet.", "Esta pestaña todavía no tiene funciones.", "В этой вкладке пока нет функций.")
+for _, t in ipairs({ VisualsTab, PlayerTab, CombatTab, FarmTab, TeleportsTab, AlertsTab, MiscTab, FunTab }) do
+    t:Paragraph({ Title = "Coming soon", Desc = noFeaturesMsg })
+end
+
+print("[SAHUR] Loaded Tabs")
+
+----------------------------------------------------
+-- Helpers de UI (mismas firmas que en el resto de hubs: tab, id, titulo, desc, default, callback)
+----------------------------------------------------
+local function AddToggle(tab, id, title, desc, default, cb)
+    KeyTab[id] = tab
+    Ex[id] = default
+    local el = tab:Toggle({ Title = title, Desc = desc, Value = default, Callback = function(v)
+        Ex[id] = v
+        if cb then cb(v) end
+    end })
+    Setters[id] = function(v) Ex[id] = v pcall(function() el:Set(v) end) end
+end
+
+local function AddSlider(tab, id, title, desc, min, max, default, cb)
+    KeyTab[id] = tab
+    Ex[id] = default
+    local el = tab:Slider({
+        Title = title, Desc = desc, Step = 1,
+        Value = { Min = min, Max = max, Default = default },
+        Callback = function(v)
+            Ex[id] = v
+            if cb then cb(v) end
+        end,
+    })
+    Setters[id] = function(v) Ex[id] = v pcall(function() el:Set(v) end) end
+end
+
+local function AddDropdown(tab, id, title, desc, values, default, cb)
+    KeyTab[id] = tab
+    Ex[id] = default
+    local el = tab:Dropdown({ Title = title, Desc = desc, Values = values, Value = default, Callback = function(v)
+        Ex[id] = v
+        if cb then cb(v) end
+    end })
+    Setters[id] = function(v) Ex[id] = v pcall(function() el:Select(v) end) end
+end
+
+local function AddInput(tab, id, title, desc, placeholder, value, cb)
+    KeyTab[id] = tab
+    Ex[id] = value or ""
+    local el = tab:Input({ Title = title, Desc = desc, Placeholder = placeholder, Value = value or "", Callback = function(t)
+        Ex[id] = tostring(t or "")
+        if cb then cb(Ex[id]) end
+    end })
+    Setters[id] = function(v) Ex[id] = v pcall(function() el:Set(v) end) end
+end
+
+local function AddColor(tab, id, title, desc, default, cb)
+    KeyTab[id] = tab
+    Ex[id] = default
+    local el
+    local ok = pcall(function()
+        el = tab:Colorpicker({ Title = title, Desc = desc, Default = default, Callback = function(c)
+            Ex[id] = c
+            if cb then cb(c) end
+        end })
+    end)
+    if ok and el then
+        Setters[id] = function(v) Ex[id] = v pcall(function() el:Set(v) end) end
+    end
+end
+
+local KEY_CHOICES = { "RightShift", "RightControl", "Insert", "Home", "X", "N", "G", "B", "Z", "V", "H", "J", "K", "L", "R", "T", "Y", "U", "M", "C", "F", "Q" }
+
+local function AddKeybind(tab, id, title, desc, default, action)
+    KeyTab[id] = tab
+    Ex[id] = default
+    Actions[id] = action
+    local function set(v)
+        local name = typeof(v) == "EnumItem" and v.Name or tostring(v)
+        local ok = pcall(function() return Enum.KeyCode[name] end)
+        if ok then Ex[id] = name end
+        FX.LastKeySet = os.clock() -- para no ejecutar la accion al reasignar una tecla
+    end
+    local el
+    local ok = pcall(function()
+        el = tab:Keybind({ Title = title, Desc = desc, Value = default, Callback = set })
+    end)
+    if ok and el then
+        Setters[id] = function(v) pcall(function() el:Set(v) end) end
+    else
+        local dd = tab:Dropdown({ Title = title, Desc = desc, Values = KEY_CHOICES, Value = default, Callback = set })
+        Setters[id] = function(v) pcall(function() dd:Select(v) end) end
+    end
+end
+
+----------------------------------------------------
+-- MAIN TAB
+----------------------------------------------------
+MainTab:Section({ Title = "What's New" })
+MainTab:Paragraph({
+    Title = "Sahur Hub " .. VERSION,
+    Desc = Msg(
+        "+ Base UI for Murder Mystery 2\n+ Info, Keybinds and Configs tabs ready\n+ Configs: save, load, rename, duplicate, delete, auto-load, load scope\n+ Share codes: portable and online short codes\n+ Languages: English, Español, Русский\n+ Floating Hub button for mobile\n+ Empty MM2 tabs prepared for the next features",
+        "+ UI base para Murder Mystery 2\n+ Pestañas Info, Teclas y Configs listas\n+ Configs: guardar, cargar, renombrar, duplicar, borrar, auto-carga, alcance de carga\n+ Códigos para compartir: portables y cortos online\n+ Idiomas: English, Español, Русский\n+ Botón flotante del Hub para móvil\n+ Pestañas vacías de MM2 preparadas para las próximas funciones",
+        "+ Базовый интерфейс для Murder Mystery 2\n+ Готовы вкладки Инфо, Бинды и Конфиги\n+ Конфиги: сохранение, загрузка, переименование, дублирование, удаление, автозагрузка, область загрузки\n+ Коды для обмена: обычные и короткие онлайн\n+ Языки: English, Español, Русский\n+ Плавающая кнопка хаба для телефона\n+ Пустые вкладки MM2 для будущих функций"),
+})
+MainTab:Section({ Title = "Features" })
+MainTab:Paragraph({ Title = "Coming soon", Desc = noFeaturesMsg })
+
+----------------------------------------------------
+-- INFO TAB
+----------------------------------------------------
+print("[SAHUR] Loading Info Tab")
+InfoTab:Section({ Title = "Player Information" })
+
+-- rbxthumb funciona siempre, sin depender de GetUserThumbnailAsync
+local avatarUrl = string.format("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150", LocalPlayer.UserId)
+
+InfoTab:Paragraph({
+    Title = "User Profile",
+    Desc = string.format(
+        Msg("Username: %s\nDisplay Name: %s\nUser ID: %d\nExecutor: %s\nExecutions: %d",
+            "Usuario: %s\nNombre visible: %s\nID de usuario: %d\nEjecutor: %s\nEjecuciones: %d",
+            "Имя: %s\nОтображаемое имя: %s\nID: %d\nЭкзекутор: %s\nЗапусков: %d"),
+        LocalPlayer.Name, LocalPlayer.DisplayName, LocalPlayer.UserId, currentExecutor, executionCount),
+    Image = avatarUrl,
+    ImageSize = 48,
+})
+
+InfoTab:Section({ Title = "Live Session" })
+local sessionPara = InfoTab:Paragraph({ Title = "Session", Desc = Msg("Reading game data...", "Leyendo datos del juego...", "Чтение данных игры...") })
+task.spawn(function()
+    local frames, last = 0, os.clock()
+    table.insert(Conns, RunService.RenderStepped:Connect(function() frames = frames + 1 end))
+    local started = os.clock()
+    while alive do
+        task.wait(1)
+        local now = os.clock()
+        local fps = math.floor(frames / math.max(now - last, 0.001) + 0.5)
+        frames, last = 0, now
+        local ping = "?"
+        pcall(function() ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) .. " ms" end)
+        local mins = math.floor((now - started) / 60)
+        local txt = string.format(
+            Msg("Players: %d / %d\nFPS: %d\nPing: %s\nTime with the script: %d min",
+                "Jugadores: %d / %d\nFPS: %d\nPing: %s\nTiempo con el script: %d min",
+                "Игроки: %d / %d\nFPS: %d\nПинг: %s\nВремя со скриптом: %d мин"),
+            #Players:GetPlayers(), Players.MaxPlayers, fps, ping, mins)
+        pcall(function() sessionPara:SetDesc(txt) end)
+    end
+end)
+
+InfoTab:Section({ Title = "Script Information" })
+InfoTab:Paragraph({
+    Title = "About Sahur Hub",
+    Desc = Msg("A script for Murder Mystery 2.\nVersion: " .. VERSION,
+        "Un script para Murder Mystery 2.\nVersión: " .. VERSION,
+        "Скрипт для Murder Mystery 2.\nВерсия: " .. VERSION),
+})
+InfoTab:Paragraph({
+    Title = "Where to find things",
+    Desc = Msg(
+        "Visuals: ESP.\nPlayer: movement and character options.\nCombat: murderer and sheriff tools.\nFarm: coins and automation.\nTeleports: map and player teleports.\nAlerts: role and event notifications.\nMisc: utilities.\nFun: client-side extras.\nKeybinds: every key and floating button can be rebound.\nConfigs: save, load and share your setup.",
+        "Visuales: ESP.\nJugador: movimiento y opciones del personaje.\nCombate: herramientas de asesino y sheriff.\nFarmeo: monedas y automatización.\nTeletransportes: al mapa y a jugadores.\nAlertas: avisos de roles y eventos.\nMisc: utilidades.\nDiversión: extras solo del lado del cliente.\nTeclas: todas las teclas y botones flotantes se pueden cambiar.\nConfigs: guarda, carga y comparte tu configuración.",
+        "Визуал: ESP.\nИгрок: движение и настройки персонажа.\nБой: инструменты убийцы и шерифа.\nФарм: монеты и автоматизация.\nТелепорты: к карте и игрокам.\nОповещения: уведомления о ролях и событиях.\nРазное: утилиты.\nВеселье: клиентские дополнения.\nБинды: все клавиши и плавающие кнопки можно менять.\nКонфиги: сохраняйте, загружайте и делитесь настройками."),
+})
+InfoTab:Paragraph({
+    Title = "Good to know",
+    Desc = Msg(
+        "Tabs marked 'Coming soon' have no features yet.\nOn mobile, the floating buttons can be shown or hidden from the Keybinds tab.\nConfigs save every option of every tab; Load Scope lets you apply only one tab's options.",
+        "Las pestañas con 'Próximamente' todavía no tienen funciones.\nEn móvil, los botones flotantes se muestran u ocultan desde la pestaña Teclas.\nLas configs guardan todas las opciones de todas las pestañas; el Alcance de Carga permite aplicar solo las de una pestaña.",
+        "Вкладки с пометкой 'Скоро' пока без функций.\nНа телефоне плавающие кнопки можно показать или скрыть во вкладке Бинды.\nКонфиги сохраняют все опции всех вкладок; область загрузки позволяет применить только одну вкладку."),
+})
+print("[SAHUR] Info tab loaded")
+
+----------------------------------------------------
+-- TECLAS (PC) + botones flotantes (movil)
+----------------------------------------------------
+FX.ToggleHub = function()
+    local ok = false
+    if type(Window.Toggle) == "function" then
+        ok = pcall(function() Window:Toggle() end)
+    end
+    if not ok then
+        if FX.HubOpen then
+            ok = pcall(function() Window:Close() end)
+        else
+            ok = pcall(function() Window:Open() end)
+        end
+    end
+    if ok then FX.HubOpen = not FX.HubOpen end
+end
+
+table.insert(Conns, UserInputService.InputBegan:Connect(function(input, processed)
+    if processed or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+    local k = input.KeyCode.Name
+    for id, action in pairs(Actions) do
+        if Ex[id] == k and action then
+            -- pequeno retraso: si la tecla se estaba reasignando en la pestana Keybinds, no se ejecuta
+            local pressed = os.clock()
+            task.delay(0.08, function()
+                if (FX.LastKeySet or 0) >= pressed - 0.05 then return end
+                pcall(action)
+            end)
+        end
+    end
+end))
+
+-- Botones flotantes (se pueden arrastrar). Para anadir mas: Floating[#Floating+1] via MakeFloat.
+local Floating = {}
+local function MakeFloat(text, y, onTap, getOn, flag)
+    local b = Instance.new("TextButton")
+    b.Name = "SahurHub_Float_" .. text
+    b.Size = UDim2.fromOffset(46, 46)
+    b.Position = UDim2.new(1, -66, 0.5, y)
+    b.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    b.BackgroundTransparency = 0.2
+    b.AutoButtonColor = false
+    b.Text = text
+    b.TextColor3 = Color3.new(1, 1, 1)
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 12
+    b.Visible = false
+    b.ZIndex = 50
+    b.Parent = Gui
+    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = b
+    local st = Instance.new("UIStroke"); st.Thickness = 2; st.Color = Color3.fromRGB(120, 120, 120); st.Parent = b
+
+    local dragging, moved = false, false
+    local startPt, startPos = Vector2.zero, Vector2.zero
+    b.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging, moved = true, false
+            startPt = Vector2.new(input.Position.X, input.Position.Y)
+            startPos = b.AbsolutePosition
+        end
+    end)
+    table.insert(Conns, UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+            local d = Vector2.new(input.Position.X, input.Position.Y) - startPt
+            if d.Magnitude > 10 then moved = true end
+            if moved then b.Position = UDim2.fromOffset(startPos.X + d.X, startPos.Y + d.Y) end
+        end
+    end))
+    table.insert(Conns, UserInputService.InputEnded:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
+            dragging = false
+            if not moved then pcall(onTap) end
+        end
+    end))
+    Floating[#Floating + 1] = { Btn = b, Stroke = st, GetOn = getOn, Flag = flag }
+end
+
+function FX.UpdateButtons()
+    for _, f in ipairs(Floating) do
+        f.Btn.Visible = (Ex.FloatButtons ~= false) and (f.Flag == nil or Ex[f.Flag] ~= false)
+        local on = f.GetOn and f.GetOn() or false
+        f.Stroke.Color = on and Color3.fromRGB(0, 255, 120) or Color3.fromRGB(120, 120, 120)
+    end
+end
+
+MakeFloat("HUB", -70, function() FX.ToggleHub() end, function() return FX.HubOpen end, "BtnHub")
+
+print("[SAHUR] Loading Keybinds Tab")
+----------------------------------------------------
+-- KEYBINDS TAB
+----------------------------------------------------
+KeybindsTab:Section({ Title = "Hub" })
+AddKeybind(KeybindsTab, "Key_Hub", "Open / Close Hub",
+    Msg("Shows or hides this menu with one key (default: Right Shift).",
+        "Muestra u oculta este menú con una tecla (por defecto: Shift derecho).",
+        "Показывает или скрывает меню одной клавишей (по умолчанию: правый Shift)."),
+    "RightShift", function() FX.ToggleHub() end)
+-- Para anadir mas teclas: AddKeybind(KeybindsTab, "Key_Algo", "Titulo", "Descripcion", "Z", function() ... end)
+
+KeybindsTab:Section({ Title = "Mobile Buttons" })
+AddToggle(KeybindsTab, "FloatButtons", "Floating Buttons",
+    Msg("Shows the draggable floating buttons on the screen (for mobile).",
+        "Muestra los botones flotantes arrastrables en la pantalla (para móvil).",
+        "Показывает плавающие кнопки, которые можно перетаскивать (для телефона)."),
+    true, function() FX.UpdateButtons() end)
+AddToggle(KeybindsTab, "BtnHub", "Hub Button",
+    Msg("Floating button that opens or closes the menu.",
+        "Botón flotante que abre o cierra el menú.",
+        "Плавающая кнопка, открывающая и закрывающая меню."),
+    true, function() FX.UpdateButtons() end)
+
+FX.UpdateButtons()
+print("[SAHUR] Keybinds tab loaded")
+
+----------------------------------------------------
+-- CONFIG SYSTEM
+----------------------------------------------------
+print("[SAHUR] Loading Config System")
+;(function()
+local function Notify(title, content, dur)
+    pcall(function() WindUI:Notify({ Title = title, Content = content, Duration = dur or 3 }) end)
+end
+
+local configFolder = "SahurHub_Configs"
+local autoloadFile = configFolder .. "/_autoload.txt"
+if makefolder then
+    if isfolder then
+        if not isfolder(configFolder) then pcall(makefolder, configFolder) end
+    else
+        pcall(makefolder, configFolder)
+    end
+end
+
+local selectedConfig = ""
+local newConfigName = ""
+local renameTo = ""
+local importCode = ""
+local importName = ""
+local scopeName = "Everything"
+local pendingDelete = nil
+
+-- Que parte de la config se carga (por pestana)
+local GROUPS = {
+    [MainTab] = "Main", [InfoTab] = "Info", [VisualsTab] = "Visuals", [PlayerTab] = "Player",
+    [CombatTab] = "Combat", [FarmTab] = "Farm", [TeleportsTab] = "Teleports", [AlertsTab] = "Alerts",
+    [MiscTab] = "Misc", [FunTab] = "Fun", [KeybindsTab] = "Keybinds",
+}
+local function GroupOf(id)
+    local t = KeyTab[id]
+    return t and GROUPS[t] or "Other"
+end
+local SCOPE_NAMES = { "Everything", "Visuals", "Player", "Combat", "Farm", "Teleports", "Alerts", "Misc", "Fun", "Keybinds" }
+local SCOPES = {}
+for _, n in ipairs(SCOPE_NAMES) do
+    if n ~= "Everything" then SCOPES[n] = { [n] = true } end
+end
+
+-- Serializar / aplicar los valores de Ex
+local function SerializeEx()
+    local out = {}
+    for id in pairs(Setters) do
+        local v = Ex[id]
+        local t = typeof(v)
+        if t == "boolean" or t == "number" or t == "string" then
+            out[id] = v
+        elseif t == "Color3" then
+            out[id] = { __c = { v.R, v.G, v.B } }
+        end
+    end
+    return out
+end
+
+local function ApplyEx(data, scope)
+    if type(data) ~= "table" then return end
+    for id, v in pairs(data) do
+        local setter = Setters[id]
+        if setter and (not scope or scope[GroupOf(id)]) then
+            if type(v) == "table" and type(v.__c) == "table" and #v.__c == 3 then
+                v = Color3.new(v.__c[1], v.__c[2], v.__c[3])
+            end
+            if typeof(v) == typeof(Ex[id]) then
+                Ex[id] = v
+                pcall(setter, v)
+            end
+        end
+    end
+    pcall(FX.UpdateButtons)
+end
+
+-- Codigo portable: JSON -> LZW -> base64. El codigo CONTIENE la config, asi que funciona en
+-- cualquier ejecutor y para cualquier persona (no depende de archivos locales).
+local B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+local B64R = {}
+for i = 1, 64 do B64R[B64:sub(i, i)] = i - 1 end
+
+local function b64enc(s)
+    local out = {}
+    for i = 1, #s, 3 do
+        local a, b, c = s:byte(i, i + 2)
+        local v = a * 65536 + (b or 0) * 256 + (c or 0)
+        local c1 = math.floor(v / 262144) % 64
+        local c2 = math.floor(v / 4096) % 64
+        local c3 = math.floor(v / 64) % 64
+        local c4 = v % 64
+        out[#out + 1] = B64:sub(c1 + 1, c1 + 1) .. B64:sub(c2 + 1, c2 + 1)
+            .. (b and B64:sub(c3 + 1, c3 + 1) or "") .. (c and B64:sub(c4 + 1, c4 + 1) or "")
+    end
+    return table.concat(out)
+end
+
+local function b64dec(s)
+    s = s:gsub("[^%w%-_]", "")
+    local out = {}
+    for i = 1, #s, 4 do
+        local c1, c2 = B64R[s:sub(i, i)], B64R[s:sub(i + 1, i + 1)]
+        local c3, c4 = B64R[s:sub(i + 2, i + 2)], B64R[s:sub(i + 3, i + 3)]
+        if not (c1 and c2) then return nil end
+        local v = c1 * 262144 + c2 * 4096 + (c3 or 0) * 64 + (c4 or 0)
+        out[#out + 1] = string.char(math.floor(v / 65536) % 256)
+        if c3 then out[#out + 1] = string.char(math.floor(v / 256) % 256) end
+        if c4 then out[#out + 1] = string.char(v % 256) end
+    end
+    return table.concat(out)
+end
+
+local function lzwEncode(s)
+    local dict, size = {}, 256
+    for i = 0, 255 do dict[string.char(i)] = i end
+    local w, out = "", {}
+    for i = 1, #s do
+        local c = s:sub(i, i)
+        local wc = w .. c
+        if dict[wc] then
+            w = wc
+        else
+            out[#out + 1] = dict[w]
+            if size < 65535 then
+                dict[wc] = size
+                size = size + 1
+            end
+            w = c
+        end
+    end
+    if w ~= "" then out[#out + 1] = dict[w] end
+    return out
+end
+
+local function lzwDecode(codes)
+    local dict, size = {}, 256
+    for i = 0, 255 do dict[i] = string.char(i) end
+    local w = dict[codes[1]]
+    if not w then return nil end
+    local out = { w }
+    for i = 2, #codes do
+        local k = codes[i]
+        local entry
+        if dict[k] then
+            entry = dict[k]
+        elseif k == size then
+            entry = w .. w:sub(1, 1)
+        else
+            return nil
+        end
+        out[#out + 1] = entry
+        if size < 65535 then
+            dict[size] = w .. entry:sub(1, 1)
+            size = size + 1
+        end
+        w = entry
+    end
+    return table.concat(out)
+end
+
+local function PackCode(json)
+    local codes = lzwEncode(json)
+    local bytes = {}
+    for i, c in ipairs(codes) do
+        bytes[i] = string.char(math.floor(c / 256), c % 256)
+    end
+    return "SAH1-" .. b64enc(table.concat(bytes))
+end
+
+local function UnpackCode(code)
+    local body = tostring(code or ""):gsub("%s+", ""):match("^SAH1%-(.+)$")
+    if not body then return nil end
+    local raw = b64dec(body)
+    if not raw or #raw < 2 or #raw % 2 ~= 0 then return nil end
+    local codes = {}
+    for i = 1, #raw, 2 do
+        local a, b = raw:byte(i, i + 1)
+        codes[#codes + 1] = a * 256 + b
+    end
+    return lzwDecode(codes)
+end
+
+-- Codigo corto online (opcional, necesita internet en el ejecutor)
+local function HttpReq(opts)
+    local f = (syn and syn.request) or request or http_request or (http and http.request) or (fluxus and fluxus.request)
+    if not f then return nil end
+    local ok, res = pcall(f, opts)
+    if ok and type(res) == "table" then return res end
+    return nil
+end
+
+local function UploadOnline(code)
+    local r = HttpReq({ Url = "https://paste.rs/", Method = "POST", Headers = { ["Content-Type"] = "text/plain" }, Body = code })
+    if r and type(r.Body) == "string" and (r.StatusCode == 200 or r.StatusCode == 201) then
+        local id = r.Body:match("paste%.rs/(%w+)")
+        if id then return "SAH1P-" .. id end
+    end
+    local r2 = HttpReq({
+        Url = "https://dpaste.org/api/", Method = "POST",
+        Headers = { ["Content-Type"] = "application/x-www-form-urlencoded" },
+        Body = "content=" .. HttpService:UrlEncode(code) .. "&expiry_days=30",
+    })
+    if r2 and type(r2.Body) == "string" then
+        local id = r2.Body:match("dpaste%.org/(%w+)")
+        if id then return "SAH1D-" .. id end
+    end
+    return nil
+end
+
+local function ResolveCode(raw)
+    raw = tostring(raw or ""):gsub("%s+", "")
+    local pid = raw:match("^SAH1P%-(%w+)$")
+    if pid then
+        local r = HttpReq({ Url = "https://paste.rs/" .. pid, Method = "GET" })
+        if r and type(r.Body) == "string" and (r.StatusCode or 200) == 200 then
+            return (r.Body:gsub("%s+", ""))
+        end
+        return nil
+    end
+    local did = raw:match("^SAH1D%-(%w+)$")
+    if did then
+        local r = HttpReq({ Url = "https://dpaste.org/" .. did .. "/raw", Method = "GET" })
+        if r and type(r.Body) == "string" and (r.StatusCode or 200) == 200 then
+            return (r.Body:gsub("%s+", ""))
+        end
+        return nil
+    end
+    return raw
+end
+
+local function Clip(text)
+    local f = setclipboard or toclipboard or set_clipboard or (Clipboard and Clipboard.set)
+    if not f then return false end
+    return (pcall(f, text))
+end
+
+-- Archivos
+local function CfgPath(name) return configFolder .. "/" .. name .. ".json" end
+
+local function Sanitize(name)
+    return (tostring(name or ""):gsub("[^%w_%- ]", ""):gsub("^%s+", ""):gsub("%s+$", ""))
+end
+
+local function BuildData(name)
+    return { Version = "SAHUR-1", Name = name, Ex = SerializeEx() }
+end
+
+local function GetConfigList()
+    local files = {}
+    if listfiles and isfolder and isfolder(configFolder) then
+        local okl, list = pcall(listfiles, configFolder)
+        if okl and type(list) == "table" then
+            for _, file in ipairs(list) do
+                local fileName = file:match("([^/\\]+)%.json$")
+                if fileName and fileName:sub(1, 1) ~= "_" then table.insert(files, fileName) end
+            end
+        end
+    end
+    table.sort(files)
+    if #files == 0 then table.insert(files, "No configs found") end
+    return files
+end
+
+local function RefreshDropdown(dropdown, values)
+    if dropdown.Refresh then
+        dropdown:Refresh(values)
+    elseif dropdown.SetValues then
+        dropdown:SetValues(values)
+    end
+end
+
+local function ReadJson(path)
+    return pcall(function() return HttpService:JSONDecode(readfile(path)) end)
+end
+
+local function ApplyData(data, scopeNm)
+    if type(data) ~= "table" or type(data.Ex) ~= "table" then return false end
+    return (pcall(ApplyEx, data.Ex, SCOPES[scopeNm or "Everything"]))
+end
+
+local function CanFiles()
+    return (writefile and readfile and isfile) and true or false
+end
+
+local function Valid()
+    return selectedConfig ~= "" and selectedConfig ~= "No configs found"
+end
+
+local function NoFilesMsg()
+    Notify("Error", Msg("Your executor does not support file writing.", "Tu ejecutor no permite escribir archivos.", "Ваш экзекутор не поддерживает запись файлов."))
+end
+local function SelectFirstMsg()
+    Notify("Error", Msg("Select a config first.", "Primero selecciona una config.", "Сначала выберите конфиг."))
+end
+local function ExistsMsg()
+    Notify("Error", Msg("A config with that name already exists.", "Ya existe una config con ese nombre.", "Конфиг с таким именем уже существует."))
+end
+
+-- UI: selector
+ConfigsTab:Section({ Title = "Config Selector" })
+
+local initialList = GetConfigList()
+if initialList[1] ~= "No configs found" then selectedConfig = initialList[1] end
+
+local ConfigDropdown = ConfigsTab:Dropdown({
+    Title = "Select Saved Config",
+    Values = initialList,
+    Value = initialList[1],
+    Callback = function(option)
+        if option and option ~= "No configs found" then selectedConfig = option else selectedConfig = "" end
+    end
+})
+
+local function Reload(pickName)
+    local list = GetConfigList()
+    RefreshDropdown(ConfigDropdown, list)
+    local pick = pickName
+    if not pick or not table.find(list, pick) then pick = list[1] end
+    selectedConfig = (pick ~= "No configs found") and pick or ""
+    pcall(function() ConfigDropdown:Select(pick) end)
+end
+
+ConfigsTab:Button({
+    Title = "Refresh Config List",
+    Callback = function()
+        Reload(selectedConfig)
+        Notify("Configs", Msg("Config list refreshed.", "Lista de configs actualizada.", "Список конфигов обновлён."), 2)
+    end
+})
+
+ConfigsTab:Dropdown({
+    Title = "Load Scope",
+    Desc = Msg("What 'Load Selected Config' and the imports apply: everything, or only one tab's options.",
+        "Qué aplican 'Cargar Config Elegida' y las importaciones: todo, o solo las opciones de una pestaña.",
+        "Что применяют загрузка конфига и импорт: всё или только опции одной вкладки."),
+    Values = SCOPE_NAMES,
+    Value = "Everything",
+    Callback = function(option) if option then scopeName = option end end
+})
+
+ConfigsTab:Button({
+    Title = "Load Selected Config",
+    Callback = function()
+        if not Valid() then
+            Notify("Error", Msg("Please select a valid config first.", "Primero selecciona una config válida.", "Сначала выберите конфиг."))
+            return
+        end
+        if not (isfile and readfile and isfile(CfgPath(selectedConfig))) then
+            Notify("Error", Msg("Config file not found.", "No se encontró el archivo de la config.", "Файл конфига не найден."))
+            return
+        end
+        local ok, data = ReadJson(CfgPath(selectedConfig))
+        if ok and type(data) == "table" and ApplyData(data, scopeName) then
+            Notify("Configs", Msg("Loaded '", "Cargada '", "Загружено '") .. selectedConfig .. "' (" .. scopeName .. ")")
+        else
+            Notify("Error", Msg("Failed to load configuration file.", "No se pudo cargar el archivo de la config.", "Не удалось загрузить конфиг."))
+        end
+    end
+})
+
+ConfigsTab:Button({
+    Title = "Overwrite Selected Config",
+    Desc = Msg("Overwrites the selected config with the current settings.",
+        "Sobrescribe la config elegida con los ajustes actuales.",
+        "Перезаписывает выбранный конфиг текущими настройками."),
+    Callback = function()
+        if not Valid() then
+            Notify("Error", Msg("Select a config from the dropdown to overwrite.", "Selecciona una config para sobrescribir.", "Выберите конфиг для перезаписи."))
+            return
+        end
+        if not writefile then return NoFilesMsg() end
+        writefile(CfgPath(selectedConfig), HttpService:JSONEncode(BuildData(selectedConfig)))
+        Notify("Configs", Msg("Overwrote '", "Sobrescrita '", "Перезаписано '") .. selectedConfig .. "'")
+    end
+})
+
+-- UI: crear
+ConfigsTab:Section({ Title = "Create New Config" })
+
+ConfigsTab:Input({
+    Title = "New Config Name",
+    Placeholder = "My config",
+    Value = "",
+    Callback = function(text) newConfigName = Sanitize(text) end
+})
+
+ConfigsTab:Button({
+    Title = "Save New Config",
+    Callback = function()
+        if newConfigName == "" or newConfigName:sub(1, 1) == "_" then
+            Notify("Error", Msg("Type a valid name first (letters, numbers, spaces, _ and -).", "Escribe primero un nombre válido (letras, números, espacios, _ y -).", "Сначала введите имя (буквы, цифры, пробелы, _ и -)."))
+            return
+        end
+        if not CanFiles() then return NoFilesMsg() end
+        if isfile(CfgPath(newConfigName)) then return ExistsMsg() end
+        writefile(CfgPath(newConfigName), HttpService:JSONEncode(BuildData(newConfigName)))
+        Reload(newConfigName)
+        Notify("Configs", Msg("Saved '", "Guardada '", "Сохранено '") .. newConfigName .. "'")
+    end
+})
+
+-- UI: administrar (renombrar, duplicar, borrar, auto-carga)
+ConfigsTab:Section({ Title = "Manage Configs" })
+
+ConfigsTab:Input({
+    Title = "Rename To",
+    Placeholder = "New name",
+    Value = "",
+    Callback = function(text) renameTo = Sanitize(text) end
+})
+
+ConfigsTab:Button({
+    Title = "Rename Selected Config",
+    Desc = Msg("Type the new name above, then press this.", "Escribe el nuevo nombre arriba y luego presiona esto.", "Введите новое имя выше, затем нажмите это."),
+    Callback = function()
+        if not Valid() then return SelectFirstMsg() end
+        if renameTo == "" or renameTo:sub(1, 1) == "_" then
+            Notify("Error", Msg("Type the new name first.", "Escribe primero el nuevo nombre.", "Сначала введите новое имя."))
+            return
+        end
+        if renameTo == selectedConfig then return end
+        if not CanFiles() then return NoFilesMsg() end
+        if isfile(CfgPath(renameTo)) then return ExistsMsg() end
+        local okr, content = pcall(readfile, CfgPath(selectedConfig))
+        if not okr or type(content) ~= "string" then
+            Notify("Error", Msg("Could not read the config.", "No se pudo leer la config.", "Не удалось прочитать конфиг."))
+            return
+        end
+        local okj, data = pcall(function() return HttpService:JSONDecode(content) end)
+        if okj and type(data) == "table" then
+            data.Name = renameTo
+            content = HttpService:JSONEncode(data)
+        end
+        writefile(CfgPath(renameTo), content)
+        if delfile then pcall(delfile, CfgPath(selectedConfig)) end
+        if isfile(autoloadFile) then
+            local okA, cur = pcall(readfile, autoloadFile)
+            if okA and Sanitize(cur) == selectedConfig then pcall(writefile, autoloadFile, renameTo) end
+        end
+        local old = selectedConfig
+        Reload(renameTo)
+        Notify("Configs", "'" .. old .. "' -> '" .. renameTo .. "'")
+    end
+})
+
+ConfigsTab:Button({
+    Title = "Duplicate Selected Config",
+    Callback = function()
+        if not Valid() then return SelectFirstMsg() end
+        if not CanFiles() then return end
+        local okr, content = pcall(readfile, CfgPath(selectedConfig))
+        if not okr then return end
+        local nm = selectedConfig .. " copy"
+        local n = 2
+        while isfile(CfgPath(nm)) do
+            nm = selectedConfig .. " copy " .. n
+            n = n + 1
+        end
+        local okj, data = pcall(function() return HttpService:JSONDecode(content) end)
+        if okj and type(data) == "table" then
+            data.Name = nm
+            content = HttpService:JSONEncode(data)
+        end
+        writefile(CfgPath(nm), content)
+        Reload(nm)
+        Notify("Configs", Msg("Created '", "Creada '", "Создано '") .. nm .. "'")
+    end
+})
+
+ConfigsTab:Button({
+    Title = "Delete Selected Config",
+    Desc = Msg("Press twice within 5 seconds to confirm.", "Presiona dos veces en 5 segundos para confirmar.", "Нажмите дважды в течение 5 секунд для подтверждения."),
+    Callback = function()
+        if not Valid() then return SelectFirstMsg() end
+        if pendingDelete ~= selectedConfig then
+            pendingDelete = selectedConfig
+            local mine = selectedConfig
+            Notify("Configs", Msg("Press again to delete '", "Presiona otra vez para eliminar '", "Нажмите ещё раз, чтобы удалить '") .. mine .. "'", 5)
+            task.delay(5, function() if pendingDelete == mine then pendingDelete = nil end end)
+            return
+        end
+        pendingDelete = nil
+        if not delfile then
+            Notify("Error", Msg("Your executor cannot delete files.", "Tu ejecutor no puede borrar archivos.", "Ваш экзекутор не умеет удалять файлы."))
+            return
+        end
+        local gone = selectedConfig
+        pcall(delfile, CfgPath(gone))
+        Reload(nil)
+        Notify("Configs", Msg("Deleted '", "Eliminada '", "Удалено '") .. gone .. "'")
+    end
+})
+
+ConfigsTab:Button({
+    Title = "Set Selected As Auto-Load",
+    Desc = Msg("This config loads by itself every time you execute the script.",
+        "Esta config se carga sola cada vez que ejecutes el script.",
+        "Этот конфиг загружается сам при каждом запуске скрипта."),
+    Callback = function()
+        if not Valid() or not writefile then return SelectFirstMsg() end
+        pcall(writefile, autoloadFile, selectedConfig)
+        Notify("Configs", Msg("Auto-load: ", "Auto-carga: ", "Автозагрузка: ") .. selectedConfig)
+    end
+})
+
+ConfigsTab:Button({
+    Title = "Clear Auto-Load",
+    Callback = function()
+        if isfile and isfile(autoloadFile) and delfile then pcall(delfile, autoloadFile) end
+        if writefile then pcall(writefile, autoloadFile, "") end
+        Notify("Configs", Msg("Auto-load cleared.", "Auto-carga quitada.", "Автозагрузка отключена."))
+    end
+})
+
+-- UI: compartir / importar
+ConfigsTab:Section({ Title = "Share / Import" })
+
+local OutInput = ConfigsTab:Input({
+    Title = "Generated Code",
+    Desc = Msg("The share code appears here (it is also copied to your clipboard when your executor allows it).",
+        "El código para compartir aparece aquí (también se copia al portapapeles si tu ejecutor lo permite).",
+        "Здесь появляется код для обмена (он также копируется в буфер, если экзекутор позволяет)."),
+    Placeholder = "SAH1-...",
+    Value = "",
+    Callback = function() end
+})
+
+local function Deliver(code, kind)
+    local copied = Clip(code)
+    if #code < 30000 then pcall(function() OutInput:Set(code) end) end
+    if not copied then
+        print("[SAHUR] Share code: " .. code)
+    end
+    Notify("Configs", (copied
+        and Msg("Code copied to clipboard (", "Código copiado al portapapeles (", "Код скопирован в буфер (")
+        or Msg("Code created, see the console / the field above (", "Código creado, míralo en la consola / el campo de arriba (", "Код создан, смотрите консоль / поле выше ("))
+        .. kind .. ", " .. #code .. " chars)", 5)
+end
+
+local function MakeCode(name)
+    local json
+    if name then
+        if not (isfile and readfile and isfile(CfgPath(name))) then
+            Notify("Error", Msg("Config file not found.", "No se encontró el archivo de la config.", "Файл конфига не найден."))
+            return nil
+        end
+        local okr, content = pcall(readfile, CfgPath(name))
+        if not okr then return nil end
+        json = content
+    else
+        json = HttpService:JSONEncode(BuildData("Shared"))
+    end
+    return PackCode(json)
+end
+
+local function ShareFlow(name, online)
+    local code = MakeCode(name)
+    if not code then return end
+    if online then
+        local short = UploadOnline(code)
+        if short then
+            Deliver(short, "online")
+        else
+            Notify("Error", Msg("Online upload failed (no internet access from the executor?). Sharing the normal code instead.", "Falló la subida online (¿sin internet en el ejecutor?). Se comparte el código normal.", "Не удалось загрузить онлайн. Используется обычный код."), 5)
+            Deliver(code, "portable")
+        end
+    else
+        Deliver(code, "portable")
+    end
+end
+
+ConfigsTab:Button({
+    Title = "Share Selected Config",
+    Desc = Msg("Creates a code with the whole selected config. Anyone can import it, no files needed.",
+        "Crea un código con toda la config elegida. Cualquiera puede importarlo, sin archivos.",
+        "Создаёт код со всем выбранным конфигом. Любой может импортировать его без файлов."),
+    Callback = function()
+        if not Valid() then return SelectFirstMsg() end
+        ShareFlow(selectedConfig, false)
+    end
+})
+
+ConfigsTab:Button({
+    Title = "Share Current Settings",
+    Desc = Msg("Creates a code with what you have enabled right now (no need to save it first).",
+        "Crea un código con lo que tienes activado ahora mismo (sin guardarlo antes).",
+        "Создаёт код с тем, что включено сейчас (сохранять заранее не нужно)."),
+    Callback = function() ShareFlow(nil, false) end
+})
+
+ConfigsTab:Button({
+    Title = "Upload Selected (Online Short Code)",
+    Desc = Msg("Uploads the selected config and gives you a short code. Needs internet access from the executor.",
+        "Sube la config elegida y te da un código corto. Necesita internet en el ejecutor.",
+        "Загружает выбранный конфиг и выдаёт короткий код. Нужен интернет в экзекуторе."),
+    Callback = function()
+        if not Valid() then return SelectFirstMsg() end
+        ShareFlow(selectedConfig, true)
+    end
+})
+
+ConfigsTab:Button({
+    Title = "Upload Current (Online Short Code)",
+    Callback = function() ShareFlow(nil, true) end
+})
+
+ConfigsTab:Input({
+    Title = "Import Code",
+    Desc = Msg("Paste a share code here (portable SAH1-... or online short code).",
+        "Pega aquí un código para compartir (portable SAH1-... o código corto online).",
+        "Вставьте код для обмена (обычный SAH1-... или короткий онлайн)."),
+    Placeholder = "SAH1-...",
+    Value = "",
+    Callback = function(text) importCode = tostring(text or "") end
+})
+
+ConfigsTab:Input({
+    Title = "Save Imported As",
+    Placeholder = Msg("Name for the imported config", "Nombre para la config importada", "Имя для импортированного конфига"),
+    Value = "",
+    Callback = function(text) importName = Sanitize(text) end
+})
+
+local function ImportFlow(raw, saveAs, apply)
+    raw = tostring(raw or "")
+    if raw:gsub("%s+", "") == "" then
+        Notify("Error", Msg("Paste a code first.", "Primero pega un código.", "Сначала вставьте код."))
+        return
+    end
+    local resolved = ResolveCode(raw)
+    if not resolved then
+        Notify("Error", Msg("Could not download that short code (internet?).", "No se pudo descargar ese código corto (¿internet?).", "Не удалось скачать короткий код."), 4)
+        return
+    end
+    local json = UnpackCode(resolved)
+    local okj, data = false, nil
+    if json then okj, data = pcall(function() return HttpService:JSONDecode(json) end) end
+    if not okj or type(data) ~= "table" or type(data.Ex) ~= "table" then
+        Notify("Error", Msg("Invalid or corrupted code.", "Código inválido o dañado.", "Неверный или повреждённый код."))
+        return
+    end
+    if saveAs then
+        if not CanFiles() then return NoFilesMsg() end
+        local nm = (saveAs ~= "" and saveAs:sub(1, 1) ~= "_") and saveAs or ("Imported " .. os.date("%H%M%S"))
+        local base, n = nm, 2
+        while isfile(CfgPath(nm)) do
+            nm = base .. " " .. n
+            n = n + 1
+        end
+        data.Name = nm
+        writefile(CfgPath(nm), HttpService:JSONEncode(data))
+        Reload(nm)
+        Notify("Configs", Msg("Imported and saved as '", "Importada y guardada como '", "Импортировано и сохранено как '") .. nm .. "'")
+    end
+    if apply then
+        ApplyData(data, scopeName)
+        Notify("Configs", Msg("Config applied (", "Config aplicada (", "Конфиг применён (") .. scopeName .. ")")
+    end
+end
+
+ConfigsTab:Button({
+    Title = "Import & Apply",
+    Callback = function() ImportFlow(importCode, nil, true) end
+})
+
+ConfigsTab:Button({
+    Title = "Import & Save As New",
+    Callback = function() ImportFlow(importCode, importName, false) end
+})
+
+if getclipboard then
+    ConfigsTab:Button({
+        Title = "Import From Clipboard (Apply)",
+        Callback = function()
+            local okc, text = pcall(getclipboard)
+            ImportFlow(okc and text or "", nil, true)
+        end
+    })
+end
+
+-- UI: idioma
+ConfigsTab:Section({ Title = "Language" })
+
+local LANG_NAMES = { en = "English", es = "Español", ru = "Русский" }
+ConfigsTab:Dropdown({
+    Title = "Language",
+    Desc = Msg("English (default), Español, Русский. Titles and descriptions are translated; re-execute the script to apply.",
+        "English (por defecto), Español, Русский. Se traducen títulos y descripciones; vuelve a ejecutar el script para aplicarlo.",
+        "English (по умолчанию), Español, Русский. Переводятся названия и описания; перезапустите скрипт, чтобы применить."),
+    Values = { "English", "Español", "Русский" },
+    Value = LANG_NAMES[LANG] or "English",
+    Callback = function(option)
+        local code = (option == "Español" and "es") or (option == "Русский" and "ru") or "en"
+        if code == LANG then return end
+        if writefile then pcall(writefile, "SahurHub_Lang.txt", code) end
+        local m = {
+            en = "Language saved. Re-execute the script to apply it.",
+            es = "Idioma guardado. Vuelve a ejecutar el script para aplicarlo.",
+            ru = "Язык сохранён. Перезапустите скрипт, чтобы применить его.",
+        }
+        Notify("Language", m[code], 5)
+    end
+})
+
+-- UI: interfaz (tema, libreria, destruir)
+ConfigsTab:Section({ Title = "Interface" })
+local themeNames = {}
+pcall(function()
+    for n in pairs(WindUI:GetThemes()) do themeNames[#themeNames + 1] = n end
+    table.sort(themeNames)
+end)
+if #themeNames == 0 then
+    themeNames = { "Dark", "Light", "Rose", "Plant", "Red", "Indigo", "Sky", "Violet", "Amber", "Emerald", "Midnight", "Crimson", "MonaSpace", "Rainbow" }
+end
+local curTheme = "Dark"
+pcall(function()
+    if isfile and readfile and isfile("SahurHub_Theme.txt") then
+        local t = readfile("SahurHub_Theme.txt"):gsub("%s+", "")
+        if t ~= "" then curTheme = t end
+    end
+end)
+pcall(function() WindUI:SetTheme(curTheme) end)
+ConfigsTab:Dropdown({
+    Title = "UI Theme",
+    Desc = Msg("Changes the colors of the menu right away. It is remembered.",
+        "Cambia los colores del menú al instante. Se recuerda.",
+        "Сразу меняет цвета меню. Выбор запоминается."),
+    Values = themeNames, Value = curTheme,
+    Callback = function(v)
+        pcall(function() WindUI:SetTheme(v) end)
+        if writefile then pcall(writefile, "SahurHub_Theme.txt", tostring(v)) end
+    end,
+})
+
+local LIBS = { ["WindUI (latest)"] = "latest", ["WindUI (dist build)"] = "dist", ["WindUI 1.6.41 (stable)"] = "stable" }
+local libNames = { "WindUI (latest)", "WindUI (dist build)", "WindUI 1.6.41 (stable)" }
+local curLib = libNames[1]
+pcall(function()
+    if isfile and readfile and isfile("SahurHub_UILib.txt") then
+        local k = readfile("SahurHub_UILib.txt"):gsub("%s+", "")
+        for name, key in pairs(LIBS) do if key == k then curLib = name end end
+    end
+end)
+ConfigsTab:Dropdown({
+    Title = "UI Library",
+    Desc = Msg("Which UI build the menu uses. Re-execute the script to apply it.",
+        "Qué versión de la UI usa el menú. Vuelve a ejecutar el script para aplicarlo.",
+        "Какую сборку UI использует меню. Перезапустите скрипт, чтобы применить."),
+    Values = libNames, Value = curLib,
+    Callback = function(v)
+        if writefile and LIBS[v] then pcall(writefile, "SahurHub_UILib.txt", LIBS[v]) end
+        Notify("UI Library", Msg("Saved. Re-execute the script to apply it.", "Guardado. Vuelve a ejecutar el script para aplicarlo.", "Сохранено. Перезапустите скрипт, чтобы применить."), 4)
+    end,
+})
+
+ConfigsTab:Button({
+    Title = "Destroy Script",
+    Desc = Msg("Removes everything the script did and leaves the screen without it. It does not run again.",
+        "Quita todo lo que hizo el script y deja la pantalla sin él. No se vuelve a ejecutar.",
+        "Убирает всё, что сделал скрипт, и очищает экран. Повторно не запускается."),
+    Callback = function() task.defer(KillAll) end,
+})
+
+-- Auto-carga al ejecutar
+task.delay(3, function()
+    pcall(function()
+        if not (isfile and readfile and isfile(autoloadFile)) then return end
+        local name = Sanitize(readfile(autoloadFile))
+        if name == "" or not isfile(CfgPath(name)) then return end
+        local ok, data = ReadJson(CfgPath(name))
+        if ok and type(data) == "table" then
+            ApplyData(data, "Everything")
+            Notify("Configs", Msg("Auto-loaded '", "Auto-cargada '", "Автозагрузка '") .. name .. "'")
+        end
+    end)
+end)
+end)()
+
+print("[SAHUR] Loaded in " .. string.format("%.2f", os.clock()) .. "s")
+NotifyUI("Sahur Hub", Msg("Loaded v", "Cargado v", "Загружено v") .. VERSION, 3)
