@@ -63,13 +63,26 @@ print("[SAHUR] Loading Icon")
 ----------------------------------------------------
 local ICON_ID = 96933717122317
 local ICON_FILE = "SahurHub_Icon.png"
-local FALLBACK_ICON = "skull" -- icono lucide, siempre funciona
+local FALLBACK_ICON = "shield" -- icono lucide, siempre funciona
 
 local function IsPng(data)
     return type(data) == "string" and #data > 8 and data:sub(2, 4) == "PNG"
 end
 
+-- Descarga con HttpGet y, si el ejecutor lo bloquea, con request
+local function Download(url)
+    local ok, data = pcall(function() return game:HttpGet(url) end)
+    if ok and type(data) == "string" and #data > 0 then return data end
+    local f = (syn and syn.request) or request or http_request or (http and http.request) or (fluxus and fluxus.request)
+    if f then
+        local ok2, res = pcall(f, { Url = url, Method = "GET" })
+        if ok2 and type(res) == "table" and type(res.Body) == "string" and #res.Body > 0 then return res.Body end
+    end
+    return nil
+end
+
 local function ResolveImageId(id)
+    -- Si es un Decal, saca el ID de la textura real
     local ok, result = pcall(function()
         local obj = game:GetObjects("rbxassetid://" .. id)[1]
         if obj then
@@ -83,9 +96,18 @@ local function ResolveImageId(id)
     return tostring(id)
 end
 
+local function CacheIcon(data)
+    if not IsPng(data) then return nil end
+    pcall(writefile, ICON_FILE, data)
+    local ok, asset = pcall(getcustomasset, ICON_FILE)
+    if ok and asset then return asset end
+    return nil
+end
+
 local function GetIconAsset()
     local canFile = isfile and writefile and readfile and getcustomasset
 
+    -- 1) Usar archivo cacheado si es un PNG valido
     if canFile and isfile(ICON_FILE) then
         local ok, data = pcall(readfile, ICON_FILE)
         if ok and IsPng(data) then
@@ -96,28 +118,40 @@ local function GetIconAsset()
         end
     end
 
+    -- 2) Resolver ID real y descargar
     local imageId = ResolveImageId(ICON_ID)
+    print("[SAHUR] Icon id: " .. tostring(ICON_ID) .. " -> imagen " .. tostring(imageId))
 
     if canFile then
-        local ok, data = pcall(function()
-            return game:HttpGet("https://assetdelivery.roblox.com/v1/asset/?id=" .. imageId)
-        end)
-        if ok and IsPng(data) then
-            pcall(writefile, ICON_FILE, data)
-            local ok2, asset = pcall(getcustomasset, ICON_FILE)
-            if ok2 and asset then return asset end
+        -- 2a) assetdelivery con el ID real de la imagen (y con el original)
+        for _, id in ipairs({ tostring(imageId), tostring(ICON_ID) }) do
+            local asset = CacheIcon(Download("https://assetdelivery.roblox.com/v1/asset/?id=" .. id))
+            if asset then return asset end
+        end
+        -- 2b) miniatura del asset (sirve para decals que assetdelivery no entrega como PNG)
+        local meta = Download("https://thumbnails.roblox.com/v1/assets?assetIds=" .. ICON_ID .. "&size=420x420&format=Png&isCircular=false")
+        if meta then
+            local okj, j = pcall(function() return HttpService:JSONDecode(meta) end)
+            local url = okj and type(j) == "table" and j.data and j.data[1] and j.data[1].imageUrl
+            if url then
+                local asset = CacheIcon(Download(url))
+                if asset then return asset end
+            end
         end
     end
 
+    -- 3) Usar el ID de imagen resuelto directamente
     if imageId and imageId ~= tostring(ICON_ID) then
         return "rbxassetid://" .. imageId
     end
+
+    -- 4) Fallback seguro (icono lucide de WindUI)
     return FALLBACK_ICON
 end
 
 local IconAsset = FALLBACK_ICON
 pcall(function()
-    -- Solo usa el PNG ya cacheado (instantaneo). Nunca espera a la red.
+    -- Si ya hay un PNG cacheado se usa al instante
     if isfile and readfile and getcustomasset and isfile(ICON_FILE) then
         local data = readfile(ICON_FILE)
         if IsPng(data) then
@@ -126,8 +160,19 @@ pcall(function()
         end
     end
 end)
--- Descarga/cachea el icono en segundo plano para la proxima ejecucion
-task.spawn(function() pcall(GetIconAsset) end)
+if IconAsset == FALLBACK_ICON then
+    -- Primera ejecucion: espera hasta 8 s a que se descargue el icono (queda guardado para las siguientes)
+    local done, res = false, nil
+    task.spawn(function()
+        local ok, r = pcall(GetIconAsset)
+        if ok then res = r end
+        done = true
+    end)
+    local t0 = os.clock()
+    while not done and os.clock() - t0 < 8 do task.wait(0.1) end
+    if res then IconAsset = res end
+end
+print("[SAHUR] Icon loaded: " .. tostring(IconAsset))
 
 ----------------------------------------------------
 -- EXECUTION COUNTER + EXECUTOR
@@ -286,6 +331,16 @@ end)()
 
 if not WindUI or not Window then return end
 print("[SAHUR] WindUI loaded")
+
+-- Tema por defecto: Crimson (o el que hayas elegido en Configs)
+pcall(function()
+    local theme = "Crimson"
+    if isfile and readfile and isfile("SahurHub_Theme.txt") then
+        local t = readfile("SahurHub_Theme.txt"):gsub("%s+", "")
+        if t ~= "" then theme = t end
+    end
+    WindUI:SetTheme(theme)
+end)
 
 ----------------------------------------------------
 -- Estado compartido: Ex (valores), Setters, tabs de cada opcion, acciones de teclas
@@ -715,12 +770,12 @@ AddToggle(KeybindsTab, "FloatButtons", "Floating Buttons",
     Msg("Shows the draggable floating buttons on the screen (for mobile).",
         "Muestra los botones flotantes arrastrables en la pantalla (para móvil).",
         "Показывает плавающие кнопки, которые можно перетаскивать (для телефона)."),
-    true, function() FX.UpdateButtons() end)
+    false, function() FX.UpdateButtons() end)
 AddToggle(KeybindsTab, "BtnHub", "Hub Button",
     Msg("Floating button that opens or closes the menu.",
         "Botón flotante que abre o cierra el menú.",
         "Плавающая кнопка, открывающая и закрывающая меню."),
-    true, function() FX.UpdateButtons() end)
+    false, function() FX.UpdateButtons() end)
 
 FX.UpdateButtons()
 print("[SAHUR] Keybinds tab loaded")
@@ -1438,7 +1493,7 @@ end)
 if #themeNames == 0 then
     themeNames = { "Dark", "Light", "Rose", "Plant", "Red", "Indigo", "Sky", "Violet", "Amber", "Emerald", "Midnight", "Crimson", "MonaSpace", "Rainbow" }
 end
-local curTheme = "Dark"
+local curTheme = "Crimson"
 pcall(function()
     if isfile and readfile and isfile("SahurHub_Theme.txt") then
         local t = readfile("SahurHub_Theme.txt"):gsub("%s+", "")
