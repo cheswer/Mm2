@@ -350,7 +350,7 @@ local Setters = {}
 local KeyTab = {}   -- id -> tab (para el alcance de carga de las configs)
 local Actions = {}  -- id de tecla -> funcion
 local Conns = {}
-local FX = { LastKeySet = 0, HubOpen = true }
+local FX = { LastKeySet = 0, HubOpen = true, Cleanups = {} }
 local alive = true
 
 local function NotifyUI(title, content, dur)
@@ -468,6 +468,7 @@ end
 local function KillAll()
     if not alive then return end
     alive = false
+    for _, f in ipairs(FX.Cleanups) do pcall(f) end
     for _, c in ipairs(Conns) do pcall(function() c:Disconnect() end) end
     pcall(function() Gui:Destroy() end)
     pcall(function() Window:Destroy() end)
@@ -493,9 +494,6 @@ local ConfigsTab   = Window:Tab({ Title = "Configs",   Icon = "settings" })
 
 -- Tabs sin funciones todavia: un aviso para que no queden en blanco
 local noFeaturesMsg = Msg("This tab has no features yet.", "Esta pestaña todavía no tiene funciones.", "В этой вкладке пока нет функций.")
-for _, t in ipairs({ VisualsTab, PlayerTab, CombatTab, FarmTab, TeleportsTab, AlertsTab, MiscTab, FunTab }) do
-    t:Paragraph({ Title = "Coming soon", Desc = noFeaturesMsg })
-end
 
 print("[SAHUR] Loaded Tabs")
 
@@ -592,12 +590,18 @@ MainTab:Section({ Title = "What's New" })
 MainTab:Paragraph({
     Title = "Sahur Hub " .. VERSION,
     Desc = Msg(
-        "+ Base UI for Murder Mystery 2\n+ Info, Keybinds and Configs tabs ready\n+ Configs: save, load, rename, duplicate, delete, auto-load, load scope\n+ Share codes: portable and online short codes\n+ Languages: English, Español, Русский\n+ Floating Hub button for mobile\n+ Empty MM2 tabs prepared for the next features",
-        "+ UI base para Murder Mystery 2\n+ Pestañas Info, Teclas y Configs listas\n+ Configs: guardar, cargar, renombrar, duplicar, borrar, auto-carga, alcance de carga\n+ Códigos para compartir: portables y cortos online\n+ Idiomas: English, Español, Русский\n+ Botón flotante del Hub para móvil\n+ Pestañas vacías de MM2 preparadas para las próximas funciones",
-        "+ Базовый интерфейс для Murder Mystery 2\n+ Готовы вкладки Инфо, Бинды и Конфиги\n+ Конфиги: сохранение, загрузка, переименование, дублирование, удаление, автозагрузка, область загрузки\n+ Коды для обмена: обычные и короткие онлайн\n+ Языки: English, Español, Русский\n+ Плавающая кнопка хаба для телефона\n+ Пустые вкладки MM2 для будущих функций"),
+        "+ Base UI for Murder Mystery 2\n+ Info, Keybinds and Configs tabs ready\n+ Configs: save, load, rename, duplicate, delete, auto-load, load scope\n+ Share codes: portable and online short codes\n+ Languages: English, Español, Русский\n+ Floating Hub button for mobile\n+ MM2 features: ESP, Player, Combat, Farm, Teleports, Alerts, Misc, Fun",
+        "+ UI base para Murder Mystery 2\n+ Pestañas Info, Teclas y Configs listas\n+ Configs: guardar, cargar, renombrar, duplicar, borrar, auto-carga, alcance de carga\n+ Códigos para compartir: portables y cortos online\n+ Idiomas: English, Español, Русский\n+ Botón flotante del Hub para móvil\n+ Funciones de MM2: ESP, Jugador, Combate, Farmeo, Teleports, Alertas, Misc, Diversión",
+        "+ Базовый интерфейс для Murder Mystery 2\n+ Готовы вкладки Инфо, Бинды и Конфиги\n+ Конфиги: сохранение, загрузка, переименование, дублирование, удаление, автозагрузка, область загрузки\n+ Коды для обмена: обычные и короткие онлайн\n+ Языки: English, Español, Русский\n+ Плавающая кнопка хаба для телефона\n+ MM2 features: ESP, Player, Combat, Farm, Teleports, Alerts, Misc, Fun"),
 })
 MainTab:Section({ Title = "Features" })
-MainTab:Paragraph({ Title = "Coming soon", Desc = noFeaturesMsg })
+MainTab:Paragraph({
+    Title = Msg("Included features", "Funciones incluidas", "Included features"),
+    Desc = Msg(
+        "Visuals: role ESP, chams, tracers, gun ESP\nPlayer: speed, jump, fly, noclip, FOV, anti-AFK\nCombat: auto grab gun, auto shoot, kill aura\nFarm: auto coins with bag reset\nTeleports: lobby, map, roles, players, saved spot\nAlerts: role, gun, sheriff, round, murderer nearby\nMisc/Fun: fullbright, server hop, item catalog, spin, click TP",
+        "Visuales: ESP de roles, chams, tracers, ESP del arma\nJugador: velocidad, salto, fly, noclip, FOV, anti-AFK\nCombate: auto recoger arma, auto disparo, kill aura\nFarmeo: monedas automáticas con reinicio de bolsa\nTeleports: lobby, mapa, roles, jugadores, punto guardado\nAlertas: rol, arma, sheriff, ronda, asesino cerca\nMisc/Diversión: fullbright, server hop, catálogo de items, spin, click TP",
+        "Visuals: role ESP, chams, tracers, gun ESP\nPlayer: speed, jump, fly, noclip, FOV, anti-AFK\nCombat: auto grab gun, auto shoot, kill aura\nFarm: auto coins with bag reset\nTeleports: lobby, map, roles, players, saved spot\nAlerts: role, gun, sheriff, round, murderer nearby\nMisc/Fun: fullbright, server hop, item catalog, spin, click TP"),
+})
 
 ----------------------------------------------------
 -- INFO TAB
@@ -659,9 +663,9 @@ InfoTab:Paragraph({
 InfoTab:Paragraph({
     Title = "Good to know",
     Desc = Msg(
-        "Tabs marked 'Coming soon' have no features yet.\nOn mobile, the floating buttons can be shown or hidden from the Keybinds tab.\nConfigs save every option of every tab; Load Scope lets you apply only one tab's options.",
-        "Las pestañas con 'Próximamente' todavía no tienen funciones.\nEn móvil, los botones flotantes se muestran u ocultan desde la pestaña Teclas.\nLas configs guardan todas las opciones de todas las pestañas; el Alcance de Carga permite aplicar solo las de una pestaña.",
-        "Вкладки с пометкой 'Скоро' пока без функций.\nНа телефоне плавающие кнопки можно показать или скрыть во вкладке Бинды.\nКонфиги сохраняют все опции всех вкладок; область загрузки позволяет применить только одну вкладку."),
+        "On mobile, the floating buttons can be shown or hidden from the Keybinds tab.\nConfigs save every option of every tab; Load Scope lets you apply only one tab's options.",
+        "En móvil, los botones flotantes se muestran u ocultan desde la pestaña Teclas.\nLas configs guardan todas las opciones de todas las pestañas; el Alcance de Carga permite aplicar solo las de una pestaña.",
+        "На телефоне плавающие кнопки можно показать или скрыть во вкладке Бинды.\nКонфиги сохраняют все опции всех вкладок; область загрузки позволяет применить только одну вкладку."),
 })
 print("[SAHUR] Info tab loaded")
 
@@ -779,6 +783,2078 @@ AddToggle(KeybindsTab, "BtnHub", "Hub Button",
 
 FX.UpdateButtons()
 print("[SAHUR] Keybinds tab loaded")
+
+----------------------------------------------------
+-- FEATURES (Visuals, Player, Combat, Farm, Teleports, Alerts, Misc, Fun)
+-- Todo se lee de Ex[...] en bucles, asi las configs y las teclas funcionan siempre.
+----------------------------------------------------
+print("[SAHUR] Loading Features")
+;(function()
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+local TeleportService = game:GetService("TeleportService")
+local VirtualUser, VIM
+pcall(function() VirtualUser = game:GetService("VirtualUser") end)
+pcall(function() VIM = game:GetService("VirtualInputManager") end)
+
+local function L(en, es) return Msg(en, es, en) end
+local function Notify(t, c, d) NotifyUI(t, c, d or 3) end
+local function Safe(f, ...) local ok, r = pcall(f, ...) if ok then return r end return nil end
+local function Cn(sig, f) local c = sig:Connect(f) table.insert(Conns, c) return c end
+local function Camera() return Workspace.CurrentCamera end
+
+local Cleanups = FX.Cleanups
+local Roles = {}      -- Player -> "Murderer" | "Sheriff" | "Innocent" | "Dead"
+local Cache = {}
+
+----------------------------------------------------
+-- Helpers de jugador / roles
+----------------------------------------------------
+local function Char(p) return p and p.Character end
+local function Hum(p) local c = Char(p) return c and c:FindFirstChildOfClass("Humanoid") end
+local function Root(p) local c = Char(p) return c and c:FindFirstChild("HumanoidRootPart") end
+local function IsAlive(p) local h = Hum(p) return h ~= nil and h.Health > 0 end
+
+local function FindTool(p, name)
+    local c = Char(p)
+    local t = c and c:FindFirstChild(name)
+    if t and t:IsA("Tool") then return t end
+    local bp = p:FindFirstChildOfClass("Backpack")
+    t = bp and bp:FindFirstChild(name)
+    if t and t:IsA("Tool") then return t end
+    return nil
+end
+
+local function GetRole(p)
+    if not IsAlive(p) then return "Dead" end
+    if FindTool(p, "Knife") then return "Murderer" end
+    if FindTool(p, "Gun") then return "Sheriff" end
+    return "Innocent"
+end
+
+local function FindByRole(role)
+    for p, r in pairs(Roles) do
+        if r == role and p.Parent then return p end
+    end
+    return nil
+end
+
+local function Dist(a, b) return (a.Position - b.Position).Magnitude end
+
+----------------------------------------------------
+-- Helpers de mapa (nombres tipicos de MM2; se buscan de forma tolerante)
+----------------------------------------------------
+local function GetCoinContainer()
+    if Cache.cc and Cache.cc.Parent then return Cache.cc end
+    Cache.cc = nil
+    for _, m in ipairs(Workspace:GetChildren()) do
+        if m:IsA("Model") or m:IsA("Folder") then
+            local cc = m:FindFirstChild("CoinContainer")
+            if cc then Cache.cc = cc return cc end
+        end
+    end
+    return nil
+end
+
+local function GetMap()
+    local cc = GetCoinContainer()
+    return cc and cc.Parent or nil
+end
+
+local function GetGunDrop()
+    local g = Workspace:FindFirstChild("GunDrop")
+    if g and (g:IsA("BasePart") or g:IsA("Model")) then return g end
+    return nil
+end
+
+local function PartPos(o)
+    if not o then return nil end
+    if o:IsA("BasePart") then return o.CFrame end
+    if o:IsA("Model") then return o:GetPivot() end
+    return nil
+end
+
+local function TeleportTo(cf)
+    local r = Root(LocalPlayer)
+    if not r or not cf then return false end
+    r.CFrame = cf + Vector3.new(0, 3, 0)
+    r.AssemblyLinearVelocity = Vector3.zero
+    return true
+end
+
+----------------------------------------------------
+-- Catalogo de items (sacado del dump de Dex)
+----------------------------------------------------
+local DB_RAW = [==[
+Gifts 2015|Christmas|Misc||0
+Candies|Halloween|Misc||0
+Default Knife|Common|Knife|196750384|0
+Default Gun|Common|Gun|196751820|0
+Whiteout|Common|Knife|196751515|0
+Splatter|Common|Knife|16964346058|0
+Ice|Common|Knife|196750668|0
+Love|Common|Knife|196750845|0
+Wanwood|Uncommon|Knife|196751441|0
+Bluesteel|Uncommon|Knife|196750197|0
+Adurite|Uncommon|Knife|196749885|0
+Rainbow|Rare|Knife|196750963|0
+Galaxy|Rare|Knife|196750422|0
+Plasmite|Legendary|Knife|196750899|0
+Deathshard|Godly|Knife|196750305|0
+Deathshard|Godly|Knife|3187390667|1
+Blood|Classic|Knife|473573464|0
+Ghost|Classic|Knife|473574401|0
+Splitter|Classic|Knife|473574001|0
+Shadow|Classic|Knife|474030882|0
+Prince|Classic|Knife|473575049|0
+America|Classic|Gun|196751752|0
+Golden|Classic|Gun|196751989|0
+Cowboy|Classic|Gun|196752052|0
+Phaser|Classic|Gun|196752144|0
+Laser|Classic|Gun|196751943|0
+Big Kill|Common|Gun|196752330|0
+Cold|Common|Gun|196752499|0
+Fallout|Common|Gun|196752601|0
+Iron|Common|Gun|196752812|0
+Adurite|Uncommon|Gun|196752289|0
+Bluesteel|Uncommon|Gun|196752379|0
+Camo|Uncommon|Gun|196752456|0
+Galactic|Rare|Gun|196752683|0
+Imbued|Rare|Gun|196752718|0
+Viper|Legendary|Gun|196752926|0
+Luger|Godly|Gun|198042673|0
+Luger|Godly|Gun|3187395551|1
+Reptile|Common|Knife|197499641|0
+Gifted|Uncommon|Knife|197626358|0
+Future|Uncommon|Knife|197638833|0
+Nether|Rare|Knife|197656593|0
+Midnight|Legendary|Knife|197663897|0
+Night|Uncommon|Gun|197829003|0
+Spitfire|Rare|Gun|197829561|0
+Overseer|Legendary|Gun|197830043|0
+Corrupt|Unique|Knife|197879343|0
+Linked|Common|Knife|198433893|0
+Slate|Common|Knife|198434520|0
+Borders|Common|Knife|198434881|0
+8bit|Common|Knife|198438554|0
+Stalker|Uncommon|Knife|198439107|0
+Missing|Uncommon|Knife|198439692|0
+Cheesy|Uncommon|Knife|198440101|0
+Krypto|Rare|Knife|198440414|0
+Spectrum|Rare|Knife|198441038|0
+Overseer|Legendary|Knife|198441413|0
+Seer|Godly|Knife|198441783|0
+Fang|Godly|Knife|198442811|0
+Fang|Godly|Knife|3187392501|1
+Checker|Uncommon|Knife|198443382|0
+Damp|Rare|Knife|198443956|0
+Emerald|Legendary|Knife|198444909|0
+Neon|Common|Knife|198566885|0
+2015|Common|Knife|199026945|0
+Infected|Common|Knife|200953094|0
+Green|Common|Knife|473625785|0
+Orange|Common|Knife|473626025|0
+Brown|Common|Knife|473625645|0
+Yellow|Common|Knife|473625906|0
+Pink|Uncommon|Knife|473626473|0
+Blue|Uncommon|Knife|473626317|0
+Red|Uncommon|Knife|473626150|0
+Purple|Rare|Knife|473626740|0
+Black|Rare|Knife|473626646|0
+Shiny|Legendary|Knife|473626979|0
+Heat|Godly|Knife|201238541|0
+Heat|Godly|Knife|3187395238|1
+TNL|Common|Knife|201542790|0
+Engraved|Common|Gun|203807690|0
+Infiltrator|Common|Gun|203806022|0
+Juice|Common|Gun|203807397|0
+Star|Common|Gun|203807904|0
+Sketch|Uncommon|Gun|203808108|0
+Marina|Uncommon|Gun|203808190|0
+Cheddar|Uncommon|Gun|203808317|0
+iRevolver|Rare|Gun|203809168|0
+Hacker|Rare|Gun|203819271|0
+Predator|Legendary|Gun|203810176|0
+Shark|Godly|Gun|203858533|0
+Shark|Godly|Gun|3187395738|1
+Love|Uncommon|Gun|203867650|0
+Molten|Rare|Gun|203869308|0
+Sparkle|Legendary|Gun|203869110|0
+Clan|Common|Knife|235366460|0
+Cherry|Common|Knife|6711852603|0
+Cardboard|Common|Knife|235366729|0
+Stainless|Common|Knife|235366771|0
+Circuit|Uncommon|Knife|235366945|0
+Doge|Uncommon|Knife|235371276|0
+Paper|Uncommon|Knife|235366870|0
+Splash|Legendary|Knife|235371439|0
+Vortex|Rare|Knife|235371508|0
+Nova|Rare|Knife|235371686|0
+Donut|Uncommon|Knife|235366815|0
+Molten|Rare|Knife|235371809|0
+Predator|Legendary|Knife|235372015|0
+Saw|Godly|Knife|235381341|0
+Saw|Godly|Knife|3187392992|1
+Goo|Common|Knife|237336076|0
+Pea|Common|Gun|238545971|0
+News|Common|Gun|238546032|0
+HL2|Common|Gun|238546100|0
+Bit|Common|Gun|238549030|0
+Wooden|Uncommon|Gun|238546356|0
+Soda|Uncommon|Gun|238546400|0
+Caution|Uncommon|Gun|238546422|0
+Bacon|Rare|Gun|238546467|0
+Ace|Rare|Gun|238546577|0
+Universe|Legendary|Gun|238546660|0
+Laser|Godly|Gun|238546983|0
+Laser|Godly|Gun|3187395952|1
+Elite|Legendary|Knife|241095344|0
+Skool|Common|Knife|295269977|0
+Sidewinder|Common|Knife|305503783|0
+Grind|Common|Knife|305503942|0
+Euro|Common|Knife|305504173|0
+Ollie|Common|Knife|305504399|0
+Tailslide|Common|Knife|305506822|0
+Indy|Common|Knife|305506951|0
+Prism|Common|Knife|306046703|0
+Sparkle1|Common|Knife|310709709|0
+Sparkle2|Common|Knife|310710191|0
+Sparkle3|Common|Knife|310710694|0
+Sparkle4|Common|Knife|310712788|0
+Sparkle5|Common|Knife|310713235|0
+Sparkle6|Common|Knife|310713648|0
+Sparkle7|Common|Knife|310714089|0
+Sparkle8|Common|Knife|310714407|0
+Sparkle9|Common|Knife|310715104|0
+Sparkle10|Common|Knife|310715768|0
+Jack|Rare|Knife|315099010|0
+Rupture|Legendary|Gun|315100702|0
+Web|Legendary|Knife|315104004|0
+Spider|Godly|Knife|473571549|0
+Mummy|Rare|Gun|315155591|0
+Bleached|Common|Knife|315500879|0
+Clown|Common|Knife|315501118|0
+Clown|Unique|Knife|315501118|0
+Clown|Unique|Gun|4659627976|0
+Oily|Common|Knife|315501170|0
+Aqua|Common|Knife|315501208|0
+Hazmat|Uncommon|Knife|315501297|0
+Melon|Uncommon|Knife|315501369|0
+Hive|Uncommon|Knife|315501434|0
+Korblox|Rare|Knife|315501501|0
+Squire|Rare|Knife|315501560|0
+Fade|Legendary|Knife|315501640|0
+Slasher|Godly|Knife|315506122|0
+Slasher|Godly|Knife|3187393285|1
+Santa|Common|Knife|331746096|0
+Elf|Common|Knife|331746317|0
+Ornament|Common|Knife|331745428|0
+Ornament2|Common|Knife|331745341|0
+Snowy|Uncommon|Knife|332011125|0
+Snowman|Uncommon|Knife|331745799|0
+Wrapped|Uncommon|Knife|331745500|0
+Ginger|Rare|Knife|331744703|0
+Cane|Rare|Knife|331140746|0
+Tree|Legendary|Knife|331745577|0
+Santa|Common|Gun|332496861|0
+Elf|Common|Gun|332767999|0
+Ornament1|Common|Gun|332497144|0
+Ornament2|Common|Gun|332497550|0
+Nutcracker|Uncommon|Gun|332497657|0
+Snowman|Uncommon|Gun|332497603|0
+Wrapped|Uncommon|Gun|332497103|0
+Ginger|Rare|Gun|332497038|0
+Cane|Rare|Gun|332497187|0
+Tree|Legendary|Gun|332497688|0
+Candy|Godly|Knife|332021011|0
+Chill|Godly|Knife|332022166|0
+Handsaw|Godly|Knife|473572138|0
+Red Luger|Godly|Gun|332044583|0
+Glitch2|Common|Knife|196751515|0
+Green Luger|Godly|Gun|332044679|0
+Xmas|Godly|Knife|473572568|0
+Green Elite|Legendary|Knife|332731156|0
+Blue Elite|Legendary|Knife|1269374321|0
+Sugar|Godly|Gun|332848695|0
+Clockwork|Godly|Knife|473570519|0
+Blossom|Common|Knife|363150561|0
+Passion|Common|Knife|363150334|0
+Roses|Common|Knife|363352002|0
+Hearts|Common|Knife|363352211|0
+Valentine|Common|Knife|363150149|0
+Sweetheart|Common|Knife|363150761|0
+Eco|Common|Knife|365567889|0
+Log|Common|Knife|365567962|0
+Sandy|Common|Knife|365568056|0
+Static|Common|Knife|365568163|0
+Brush|Uncommon|Knife|365568602|0
+Jigsaw|Uncommon|Knife|365569126|0
+Lucky|Uncommon|Knife|365569265|0
+Abstract|Rare|Knife|365569428|0
+Musical|Rare|Knife|365569566|0
+Fusion|Legendary|Knife|365569686|0
+Tides|Godly|Knife|473569625|0
+Tides|Godly|Knife|3187394934|1
+Glitch1|Common|Knife|196751515|0
+Pixel|Godly|Knife|473573054|0
+Blaster|Godly|Gun|386277381|0
+Virtual|Godly|Knife|386276987|0
+Patrick|Common|Knife|383476085|0
+Egg|Common|Knife|387875405|0
+Choco|Common|Knife|387874991|0
+Tulip|Common|Knife|387874661|0
+Bunny|Common|Knife|387874365|0
+Carrot|Common|Knife|387874071|0
+Cotton Candy|Legendary|Knife|435933179|0
+Xbox|Common|Knife|439325100|0
+Old Glory|Godly|Knife|473570051|0
+Amerilaser|Godly|Gun|446050753|0
+Nightblade|Godly|Knife|475478854|0
+Asteroid|Common|Gun|476599365|0
+Brains|Common|Knife|531873956|0
+Bones|Common|Knife|531873816|0
+Ghosty|Common|Knife|531873080|0
+Witch|Common|Knife|531873553|0
+Vampire|Uncommon|Knife|531873248|0
+Moons|Uncommon|Knife|531873154|0
+Wolf|Uncommon|Knife|531873487|0
+Orange Marble|Rare|Knife|531873011|0
+Bats|Rare|Knife|531873625|0
+Scratch|Legendary|Knife|531873371|0
+Hallow\'s Edge|Godly|Knife|531878205|0
+Hallow\'s Blade|Godly|Knife|1132775323|0
+Ecto|Common|Knife|1133331679|0
+Zombie|Common|Knife|1133331885|0
+Phantom|Common|Knife|1133332075|0
+CandyCorn|Common|Knife|1133337797|0
+Webs|Uncommon|Knife|1133325465|0
+Mummy|Uncommon|Knife|1133352032|0
+Potion|Uncommon|Knife|1133366632|0
+Magma|Rare|Knife|1133317890|0
+Green Marble|Rare|Knife|1133366830|0
+Scratch|Legendary|Knife|1133316381|0
+Eternal|Godly|Knife|619605312|0
+Alex|Common|Knife|546159020|0
+Sub|Common|Knife|546159250|0
+Denis|Common|Knife|546161062|0
+Sketchy|Common|Knife|546161470|0
+Corl|Common|Knife|546161858|0
+JD|Legendary|Knife|566867312|0
+Ice Dragon|Godly|Knife|585872642|0
+Flames|Godly|Knife|585873746|0
+Pumpking|Godly|Knife|1138143590|0
+BattleAxe|Godly|Knife|1133237368|0
+Present|Common|Knife|1268699212|0
+Coal|Common|Knife|1268699677|0
+Elf|Common|Knife|1268703023|0
+Santa|Common|Knife|1268703618|0
+Tree|Uncommon|Knife|1268704124|0
+Frosty|Uncommon|Knife|1268704507|0
+Sweater|Uncommon|Knife|1268704902|0
+Gingerbread|Rare|Knife|1268705527|0
+Snowy|Rare|Knife|1268705947|0
+Green Fire|Legendary|Knife|1268706374|0
+Red Fire|Legendary|Knife|1269256860|0
+Winter\'s Edge|Godly|Knife|1268708987|0
+Ice Shard|Godly|Knife|1268710824|0
+Snowflake|Godly|Knife|1268932977|0
+Frostsaber|Godly|Knife|1269580035|0
+Box of Red Wrapping Paper|Christmas|Misc||0
+Box of Purple Wrapping Paper|Christmas|Misc||0
+Box of Gold Wrapping Paper |Christmas|Misc||0
+Box of Green Wrapping Paper|Christmas|Misc||0
+Box of Blue Wrapping Paper|Christmas|Misc||0
+Box of Ultra Wrapping Paper|Christmas|Misc||0
+Blue Candy|Unique|Knife|1489495701|0
+Gold Candy|Unique|Knife|1520188792|0
+Silver Candy|Unique|Knife|1520190188|0
+Bronze Candy|Unique|Knife|1520189487|0
+Skeleton Key 2018|Halloween|Misc||0
+Batwing|Ancient|Knife|2511791893|0
+Boneblade|Godly|Knife|2513505477|0
+Boneblade|Godly|Knife|2513598419|1
+BattleAxe II|Godly|Knife|2513535503|0
+Slime|Common|Knife|2513734227|0
+Grave|Common|Knife|2513728474|0
+Haunted|Common|Knife|2513733741|0
+Bats|Common|Knife|2513732731|0
+Mummy|Uncommon|Knife|2513733542|0
+Zombie|Uncommon|Knife|2513734908|0
+Potion|Uncommon|Knife|2513733987|0
+Vampire|Rare|Knife|2513734708|0
+Toxic|Rare|Knife|2513734535|0
+Ghost|Legendary|Knife|2513732969|0
+Slime|Common|Gun|2513742319|0
+Grave|Common|Gun|2513731746|0
+Haunted|Common|Gun|2513741901|0
+Bats|Common|Gun|2513741174|0
+Mummy|Uncommon|Gun|2513741663|0
+Zombie|Uncommon|Gun|2513743298|0
+Potion|Uncommon|Gun|2513742133|0
+Vampire|Rare|Gun|2513742751|0
+Toxic|Rare|Gun|2513742519|0
+Ghost|Legendary|Gun|2513741407|0
+Nik\'s Scythe|Ancient|Knife|2533351841|0
+Eternal II|Godly|Knife|2545253030|0
+Red Hallow|Unique|Knife|2511343130|0
+Bronze Hallow|Unique|Knife|2511342846|0
+Silver Hallow|Unique|Knife|2511341094|0
+Gold Hallow|Unique|Knife|2511340308|0
+Snowflake Key 2018|Christmas|Misc||0
+Coal|Common|Knife|2669638285|0
+Santa|Common|Knife|2669637780|0
+Snowman|Common|Knife|2669640152|0
+Wrapped|Common|Knife|2669640357|0
+Snowflake|Uncommon|Knife|2669639913|0
+Holly|Uncommon|Knife|2669638990|0
+Sweater|Uncommon|Knife|2669640567|0
+Icicles|Rare|Knife|2669639638|0
+Cane|Rare|Knife|2669638508|0
+Ginger|Legendary|Knife|2669638742|0
+Coal|Common|Gun|2669784920|0
+Elf|Common|Gun|2669785184|0
+Snowman|Common|Gun|2669786846|0
+Wrapped|Common|Gun|2669787533|0
+Snowflake|Uncommon|Gun|2669786515|0
+Holly|Uncommon|Gun|2669786261|0
+Sweater|Uncommon|Gun|2669787088|0
+Icicles|Rare|Gun|2669786044|0
+Cane|Rare|Gun|2669785546|0
+Ginger|Legendary|Gun|2669785821|0
+Gingerblade|Godly|Knife|2669336659|0
+Gingerblade|Godly|Knife|2672349340|1
+Icewing|Ancient|Knife|3183085102|0
+Box of Fertilizer|Christmas|Misc||0
+Ginger Luger|Godly|Gun|2674983099|0
+S1 Test Knife|Common|Knife|196751515|0
+Mystery Key|Common|Misc||0
+Combat|Common|Knife|3183604570|0
+Combat II|Common|Knife|4972196241|0
+Copper|Common|Knife|3183605392|0
+Hardened|Common|Knife|3183605810|0
+Splat|Common|Gun|3183639522|0
+Camo|Uncommon|Knife|3183606225|0
+Tiger|Uncommon|Knife|3183606579|0
+Pirate|Uncommon|Gun|3183639867|0
+Space|Rare|Knife|3183607442|0
+Rainbow|Rare|Gun|3183640145|0
+Rune|Legendary|Knife|3183607894|0
+Gemstone|Godly|Knife|3183598040|0
+Gemstone|Godly|Knife|3183597816|1
+Red Seer|Godly|Knife|3184122829|0
+Orange Seer|Godly|Knife|3184124504|0
+Yellow Seer|Godly|Knife|3184124768|0
+Blue Seer|Godly|Knife|3184125087|0
+Purple Seer|Godly|Knife|3184125244|0
+Seer|Godly|Knife|3184125538|1
+Blue Sugar|Unique|Gun|3215262120|0
+Bronze Sugar|Unique|Gun|3215261913|0
+Silver Sugar|Unique|Gun|3215261680|0
+Gold Sugar|Unique|Gun|3215260149|0
+Eternal III|Godly|Knife|3279011390|0
+Eternal IV|Godly|Knife|4999958740|0
+Skulls|Legendary|Knife|4210915060|0
+Dungeon|Rare|Knife|4210920512|0
+Snakebite|Rare|Gun|4210925026|0
+Bones|Uncommon|Gun|4210926347|0
+Zombified|Uncommon|Knife|4210928053|0
+Brains|Uncommon|Knife|4210929184|0
+Pumpkin|Common|Knife|4210931354|0
+Slimy|Common|Knife|4210932676|0
+Webbed|Common|Gun|4210936652|0
+Candy Corn|Common|Knife|4210934082|0
+Witched|Legendary|Knife|4210938270|0
+Snakebite|Rare|Knife|4210939388|0
+Monster|Rare|Gun|4210941474|0
+Branches|Uncommon|Knife|4210943691|0
+Zombified|Uncommon|Gun|4210944924|0
+Mummified|Common|Knife|4210946577|0
+RIP|Common|Gun|4210947993|0
+Webbed|Common|Knife|4210949599|0
+Elderwood Revolver|Godly|Gun|4211142894|0
+Blue Elderwood|Unique|Gun|4468574885|0
+Silver Elderwood|Unique|Gun|4468583758|0
+Gold Elderwood|Unique|Gun|4468584345|0
+Bronze Elderwood|Unique|Gun|4468585407|0
+Elderwood Scythe|Ancient|Knife|4211148191|0
+Ghostblade|Godly|Knife|4221789003|0
+Eternalcane|Godly|Knife|4488391411|0
+Logchopper|Ancient|Knife|4535644282|0
+Frostbite|Godly|Knife|4528484880|0
+Minty|Godly|Gun|4535408229|0
+Frosted|Common|Knife|4534853444|0
+Frosted|Common|Gun|4534866678|0
+Snowflakes|Common|Knife|4534855045|0
+Snowflakes|Common|Gun|4534866065|0
+Pine|Common|Knife|4534855710|0
+Pine|Common|Gun|4534871260|0
+Gifts|Common|Knife|4534856285|0
+Gifts|Common|Gun|4534867381|0
+Gingerbread|Uncommon|Knife|4534856940|0
+Gingerbread|Uncommon|Gun|4534872116|0
+Frozen|Uncommon|Knife|4534857523|0
+Frozen|Uncommon|Gun|4534873956|0
+Lights|Uncommon|Knife|4534858185|0
+Lights|Uncommon|Gun|4534872673|0
+Aurora|Rare|Knife|4534860689|0
+Aurora|Rare|Gun|4534875165|0
+Candy Swirl|Rare|Knife|4534860226|0
+Candy Swirl|Rare|Gun|4534874602|0
+Cavern|Legendary|Knife|4534861110|0
+Cavern|Legendary|Gun|4534875511|0
+Santa\'s Magic|Legendary|Knife|4535483042|0
+Lugercane|Godly|Gun|4535482609|0
+Splash|Legendary|Gun|4659626370|0
+Nightfire|Rare|Gun|4659626966|0
+Biogun|Uncommon|Gun|4659627458|0
+Clown|Common|Gun|4659627976|0
+Deep Sea|Rare|Knife|4659634072|0
+Graffiti|Uncommon|Knife|4659634630|0
+High Tech|Uncommon|Knife|4659635055|0
+Lovely|Common|Knife|4659635584|0
+Shaded|Common|Knife|4659636085|0
+Leaf|Common|Knife|4659636452|0
+Lightbringer|Godly|Gun|4749070432|0
+Lightbringer|Godly|Gun|4751500761|0
+Darkbringer|Godly|Gun|4749071819|0
+Darkbringer|Godly|Gun|4751501078|0
+???|Godly|Gun|4749071819|0
+Bioblade|Godly|Knife|4751539262|0
+Blue Minty|Unique|Gun|4753347062|0
+Gold Minty|Unique|Gun|4753347636|0
+Bronze Minty|Unique|Gun|4753348263|0
+Silver Minty|Unique|Gun|4753346087|0
+Blue Logchopper|Unique|Knife|4753353471|0
+Bronze Logchopper|Unique|Knife|4753354123|0
+Silver Logchopper|Unique|Knife|4753352581|0
+Gold Logchopper|Unique|Knife|4753354638|0
+Prismatic|Godly|Knife|5360359935|0
+Watcher|Common|Knife|5866438542|0
+Carved|Common|Knife|5866436906|0
+Candle|Common|Knife|5872491708|0
+Candy Corn|Common|Gun|5866454590|0
+Ghosts|Uncommon|Knife|5866442790|0
+Pumpkin|Uncommon|Knife|5872490600|0
+Mummy|Uncommon|Gun|5866463755|0
+Bones|Rare|Knife|5872492951|0
+Portal|Rare|Knife|5866444722|0
+Ripper|Legendary|Gun|5866460591|0
+Candy Corn|Common|Knife|5866435364|0
+Carved|Common|Gun|5866457985|0
+Watcher|Common|Gun|5866459380|0
+Portal|Uncommon|Gun|5866461926|0
+Mummy|Uncommon|Knife|5866447521|0
+Ghosts|Rare|Gun|5866465099|0
+Ripper|Legendary|Knife|5866441301|0
+Slashed|Common|Knife|5929317433|0
+Starry|Common|Gun|5930731295|0
+Bats|Common|Knife|5930729222|0
+Vampire\'s Edge|Godly|Knife|5873256998|0
+Hallowscythe|Ancient|Knife|5877016863|0
+Hallowgun|Godly|Gun|5878721461|0
+RB Knife|Common|Knife|5984754897|0
+Peppermint|Godly|Knife|6085035357|0
+Gold Vamp\'s Edge|Unique|Knife|6084838617|0
+Silver Vamp\'s Edge|Unique|Knife|6084840560|0
+Bronze Vamp\'s Edge|Unique|Knife|6084842077|0
+Blue Vamp\'s Edge|Unique|Knife|6084854835|0
+Icebreaker|Ancient|Knife|6125729383|0
+Iceblaster|Godly|Gun|6125814417|0
+Cookieblade|Godly|Knife|6125733703|0
+Jinglegun|Godly|Gun|6125742758|0
+Gift Bag|Common|Knife|6121847170|0
+Icecracker|Legendary|Knife|6121848805|0
+Gingerbread|Uncommon|Knife|6121850031|0
+Silent Night|Rare|Knife|6121851313|0
+Ornaments|Common|Knife|6121853160|0
+Ornaments|Common|Gun|6121863515|0
+Wrap|Uncommon|Knife|6121854816|0
+Gingerbread|Uncommon|Gun|6121860619|0
+Silent Night|Rare|Gun|6121862034|0
+Gift Bag|Common|Gun|6121864813|0
+Icedriller|Legendary|Gun|6121866490|0
+Santa\'s Spirit|Legendary|Knife|6123357775|0
+Stockings|Common|Knife|6123335682|0
+Trees|Common|Knife|6123336879|0
+Wrap|Uncommon|Gun|6121867603|0
+Snowflakes|Rare|Knife|6123338102|0
+Heartblade|Godly|Knife|6413145922|0
+Red Icebreaker|Unique|Knife|6404129111|0
+Bronze Icebreaker|Unique|Knife|6404127119|0
+Silver Icebreaker|Unique|Knife|6404126280|0
+Gold Icebreaker|Unique|Knife|6404115112|0
+Red Iceblaster|Unique|Gun|6404168049|0
+Bronze Iceblaster|Unique|Gun|6404167442|0
+Silver Iceblaster|Unique|Gun|6404166698|0
+Gold Iceblaster|Unique|Gun|6404165933|0
+Eggblade|Godly|Knife|6607277825|0
+SharkSeeker|Unique|Gun|6967771328|0
+Nebula|Godly|Knife|6598123521|0
+Reaver|Rare|Knife||0
+Reaver|Legendary|Knife|7791485669|0
+Reaver|Godly|Knife|7791511648|0
+Reaver|Ancient|Knife|7791640819|0
+Stickers|Common|Knife|7800229084|0
+Cracks|Common|Knife|7800224981|0
+Cat|Common|Gun|7800253444|0
+Haunted|Common|Knife|7800222135|0
+Fall Camo|Uncommon|Gun|7800257544|0
+Wraiths|Uncommon|Gun|7800251557|0
+Wraiths|Uncommon|Knife|7808362279|0
+Gothic|Uncommon|Knife|7800221141|0
+Watcher|Rare|Knife|7800227475|0
+Magma|Rare|Knife|7800225996|0
+Spectral|Legendary|Gun|7800255531|0
+Moon|Common|Knife|7800224197|0
+Cracks|Common|Gun|7800254737|0
+Stickers|Common|Gun|7800257010|0
+Aliens|Common|Gun|7800250906|0
+Gothic|Uncommon|Gun|7800253970|0
+Zombie|Uncommon|Knife|7800222975|0
+Skulls|Uncommon|Knife|7800220325|0
+Watcher|Rare|Gun|7800256309|0
+Magma|Rare|Gun|7800252572|0
+Spectral|Legendary|Knife|7800226793|0
+Harvester|Ancient|Gun|7800847534|0
+Candleflame|Godly|Knife|7805833970|0
+Candleflame|Godly|Knife|7806121918|1
+Blue Harvester|Unique|Gun|8194219645|0
+Gold Harvester|Unique|Gun|8194222523|0
+Bronze Harvester|Unique|Gun|8194221072|0
+Silver Harvester|Unique|Gun|8194217388|0
+Swirly Axe|Ancient|Knife|8304801000|0
+Blue Swirly|Unique|Knife|9552048857|0
+Bronze Swirly|Unique|Knife|9552050165|0
+Silver Swirly|Unique|Knife|9552051805|0
+Gold Swirly|Unique|Knife|9552054920|0
+Swirly Gun|Godly|Gun|8305264097|0
+Blue Swirly|Unique|Gun|9552060741|0
+Bronze Swirly|Unique|Gun|9552063524|0
+Silver Swirly|Unique|Gun|9552064240|0
+Gold Swirly|Unique|Gun|9552065167|0
+Swirly Gun|Godly|Gun|8311393414|1
+Swirly Blade|Godly|Knife|8304805693|0
+Iceflake|Godly|Knife|8304818186|0
+Icebeam|Godly|Gun|8311005531|0
+Cane|Common|Knife|8304750295|0
+Coal|Common|Knife|8304751659|0
+Giftwrap|Common|Knife|8304754179|0
+Ribbons|Common|Knife|8304754882|0
+Stickers|Common|Knife|8304755417|0
+Cookie|Uncommon|Knife|8304752586|0
+Snowman|Uncommon|Knife|8304753468|0
+Tree|Uncommon|Knife|8304756423|0
+Swirl|Rare|Knife|8304757110|0
+Starry|Rare|Knife|8304757707|0
+Aurora|Legendary|Knife|8304750877|0
+Coal|Common|Gun|8304769409|0
+Stickers|Common|Gun|8304770115|0
+Cane|Common|Gun|8304768700|0
+Snowman|Uncommon|Gun|8304766932|0
+Cookie|Uncommon|Gun|8304771148|0
+Gingerbread|Uncommon|Gun|8304772140|0
+Ice Camo|Rare|Gun|8304767724|0
+Starry|Rare|Gun|8304772774|0
+Aurora|Legendary|Gun|8304766165|0
+Dartbringer|Unique|Gun|8626617523|0
+Plasmablade|Godly|Knife|10014680882|0
+Plasmabeam|Godly|Gun|10014717343|0
+Ghostly|Uncommon|Knife|11117375743|0
+Phantom|Godly|Knife|11229732037|0
+Spectre|Godly|Gun|11229779932|0
+Candy Corn|Common|Knife|11254057417|0
+Eyeball|Common|Knife|11254065007|0
+Stickers|Common|Knife|11254067158|0
+Darkness|Common|Knife|11254081561|0
+Hazard|Uncommon|Knife|11254083234|0
+Lantern|Uncommon|Knife|11254093910|0
+Witchbrew|Uncommon|Knife|11254115609|0
+Wraith|Rare|Knife|11254118399|0
+Curse|Rare|Knife|11254123390|0
+Vampire|Legendary|Knife|11254125546|0
+Zombie Camo|Common|Knife|11254145154|0
+Survivor Camo|Common|Knife|11254146743|0
+Boney|Common|Knife|11254152435|0
+Hunter|Common|Knife|11254154978|0
+TestItem|Common|Knife|11254158802|0
+Apocalypse|Common|Knife|11254172968|0
+Makeshift|Rare|Knife|11254180750|0
+Infected|Common|Knife|11254175272|0
+Zombified|Rare|Knife|11254182560|0
+Elderwood Blade|Godly|Knife|11262771067|0
+Elderwood Blade|Godly|Knife|11254975176|1
+Blue Elderwood|Unique|Knife|11505913287|0
+Gold Elderwood|Unique|Knife|11505917850|0
+Silver Elderwood|Unique|Knife|11505916486|0
+Bronze Elderwood|Unique|Knife|11505914752|0
+Apocalypse|Common|Gun|11255501940|0
+Candy Corn|Common|Gun|11255558166|0
+Infected|Common|Gun|11255502768|0
+Darkness|Common|Gun|11255507374|0
+Hazard|Uncommon|Gun|11255505449|0
+Wraith|Rare|Gun|11255504462|0
+Vampire|Legendary|Gun|11255503583|0
+Makeshift|Godly|Gun|11229837140|0
+Bat|Godly|Knife|11229814357|0
+Ghostfire|Rare|Gun|11284140034|0
+Moonlight|Uncommon|Gun|11284143055|0
+Brains|Uncommon|Gun|11284145298|0
+Webs|Common|Gun|11284147880|0
+Void|Uncommon|Knife|11548082732|0
+Candied|Common|Knife|11834384755|0
+Stickers|Common|Knife|11834387858|0
+Coal|Common|Knife|11834390120|0
+Snowman|Common|Knife|11834391469|0
+Snowflake|Uncommon|Knife|11834397133|0
+Stockings|Uncommon|Knife|11834392930|0
+Mistletoe|Uncommon|Knife|11834394793|0
+Gingerbread|Rare|Knife|11834399071|0
+Tree|Rare|Knife|11834400185|0
+Arctic|Legendary|Knife|11834401547|0
+Candied|Common|Gun|11834435627|0
+Stickers|Common|Gun|11834432971|0
+Coal|Common|Gun|11834434264|0
+Snowman|Common|Gun|11834436620|0
+Snowflake|Uncommon|Gun|11834437796|0
+Stockings|Uncommon|Gun|11834440319|0
+Mistletoe|Uncommon|Gun|11834438982|0
+Gingerbread|Rare|Gun|11834442414|0
+Tree|Rare|Gun|11834441321|0
+Arctic|Legendary|Gun|11834443783|0
+Wrapped|Common|Knife|11834403282|0
+Frozen|Common|Knife|11834404402|0
+Frozen|Common|Gun|11834445016|0
+Cookiecane|Godly|Knife|11855306927|0
+Cookiecane|Godly|Knife|11873640255|1
+Gingermint|Godly|Gun|11872179646|0
+Icepiercer|Ancient|Gun|11874071041|0
+Bronze Icepiercer|Unique|Gun|12226920195|0
+Silver Icepiercer|Unique|Gun|12226843957|0
+Gold Icepiercer|Unique|Gun|12226688172|0
+Red Icepiercer|Unique|Gun|12227133450|0
+Icecrusher|Rare|Knife||0
+Icecrusher|Legendary|Knife|11855361567|0
+Icecrusher|Godly|Knife|11855282546|0
+Icecrusher|Ancient|Knife|11855274019|0
+Bronze Icecrusher|Unique|Knife|12227148356|0
+Silver Icecrusher|Unique|Knife|12227142478|0
+Gold Icecrusher|Unique|Knife|12227137860|0
+Red Icecrusher|Unique|Knife|12227186408|0
+Broken|Legendary|Knife|12339323856|0
+Rose|Uncommon|Knife|12339325736|0
+Heart|Rare|Knife|12339327069|0
+Love|Common|Knife|12339328595|0
+Sakura|Godly|Knife|12339366064|0
+Blossom|Godly|Gun|12339377105|0
+Rainbow|Godly|Knife|12966184630|0
+Rainbow Gun|Godly|Gun|12966354606|0
+Fragile|Common|Knife|12965294432|0
+Marble|Uncommon|Knife|12965302237|0
+Bio|Rare|Knife|12965298174|0
+Chromatic|Legendary|Knife|12965304445|0
+Carrot|Uncommon|Knife|12965307410|0
+Painted|Rare|Knife|12965311567|0
+Fragile|Common|Gun|12965349193|0
+Painted|Uncommon|Gun|12965344675|0
+Nuke|Rare|Gun|12965335931|0
+Chromatic|Legendary|Gun|12965339774|0
+Toy|Common|Knife|13944127959|0
+Stickers|Common|Knife|13944129596|0
+Popsicle|Uncommon|Knife|13944131195|0
+Pool Noodle|Uncommon|Knife|13944132845|0
+Floral|Rare|Knife|13944134705|0
+Beach|Legendary|Knife|13944135892|0
+Stickers|Common|Gun|13944151514|0
+Toy|Common|Gun|13944152795|0
+Melon|Uncommon|Gun|13944153861|0
+Sun|Rare|Gun|13944155639|0
+Waves|Godly|Knife|13945892398|0
+Ocean|Godly|Gun|13945898892|0
+Ghoulish|Common|Knife|14967668214|0
+Etched|Common|Knife|15091321393|0
+Vines|Common|Knife|15091325210|0
+Ghosts|Common|Knife|15091326116|0
+Pumpkin|Common|Gun|15091327743|0
+Zombie|Uncommon|Knife|15091339932|0
+Meltdown|Uncommon|Knife|15091340751|0
+Steel|Uncommon|Gun|15091341552|0
+Ghastly|Rare|Gun|15091342564|0
+Darkknife|Rare|Knife|15091343579|0
+Traveler|Legendary|Gun|15091344462|0
+Spider|Common|Knife|15091399982|0
+Leaves|Common|Knife|15091400883|0
+Wood|Common|Knife|15091401811|0
+Vines|Common|Gun|15091402817|0
+Glowy|Uncommon|Knife|15091403551|0
+Eclipse|Uncommon|Knife|15091404278|0
+Steel|Uncommon|Knife|15091405483|0
+Darkgun|Rare|Gun|15091406343|0
+Ghastly|Rare|Knife|15091407068|0
+Traveler|Legendary|Knife|15091407901|0
+Traveler\'s Axe|Ancient|Knife|15070870271|0
+Red Traveler\'s|Unique|Knife|15695405379|0
+Bronze Traveler\'s|Unique|Knife|15695407020|0
+Silver Traveler\'s|Unique|Knife|15695407742|0
+Gold Traveler\'s|Unique|Knife|15695408631|0
+Traveler\'s Gun|Godly|Gun|15091442039|0
+Traveler\'s Gun|Godly|Gun|15097897227|1
+Darksword|Godly|Knife|15080267070|0
+Darkshot|Godly|Gun|15080280688|0
+Scarf|Common|Knife|15415482999|0
+Pumpkin Pie|Uncommon|Knife|15413117611|0
+Latte|Legendary|Knife|15413114703|0
+Latte|Legendary|Gun|15413116029|0
+Turkey|Godly|Knife|15413149176|0
+Frozen|Common|Knife|15635556891|0
+Present|Common|Knife|15635553149|0
+Ribbon|Common|Knife|15635552019|0
+Santa|Common|Gun|15635550625|0
+Stars|Uncommon|Knife|15635559978|0
+Canes|Uncommon|Gun|15635558982|0
+Fireplace|Uncommon|Knife|15635558021|0
+Tree|Rare|Knife|15635563249|0
+Neon|Rare|Gun|15635560825|0
+Frostfade|Legendary|Knife|15635565488|0
+Frozen|Common|Gun|15635571468|0
+Bells|Common|Knife|15635570486|0
+Elf|Common|Gun|15635569893|0
+Snowfall|Common|Knife|15635568751|0
+Canes|Uncommon|Knife|15635574962|0
+Stars|Uncommon|Gun|15635574031|0
+Snowman|Uncommon|Gun|15635572427|0
+Snowglobe|Rare|Knife|15635576863|0
+Snowflake|Rare|Gun|15635575718|0
+Frostfade|Legendary|Gun|15635577623|0
+Gingerscope|Ancient|Gun|15666469505|0
+Evergun|Godly|Gun|15682703596|0
+Evergreen|Godly|Knife|15667157715|0
+Evergreen|Godly|Knife|15694110573|1
+Gingerscythe|Rare|Knife||0
+Gingerscythe|Legendary|Knife|15683140564|0
+Gingerscythe|Godly|Knife|15683175970|0
+Gingerscythe|Ancient|Knife|15683188776|0
+Wavy|Common|Knife|16959755393|0
+Carrot|Uncommon|Knife|16959771850|0
+Spring|Rare|Knife|16959775902|0
+Robot|Rare|Knife|16959778188|0
+Wavy|Common|Gun|16960077712|0
+Carrot|Uncommon|Gun|16960082652|0
+Flowerwood|Godly|Knife|16963860501|0
+Flowerwood Gun|Godly|Gun|16963894455|0
+Blue Gingerscythe|Unique|Knife|16964448042|0
+Bronze Gingerscythe|Unique|Knife|16964449392|0
+Silver Gingerscythe|Unique|Knife|16964450895|0
+Gold Gingerscythe|Unique|Knife|16964452491|0
+Blue Gingerscope|Unique|Gun|16964462231|0
+Bronze Gingerscope|Unique|Gun|16964465320|0
+Silver Gingerscope|Unique|Gun|16964468980|0
+Gold Gingerscope|Unique|Gun|16964471890|0
+Starfish|Common|Knife|18322176343|0
+Balloons|Common|Gun|18323751962|0
+Clownfish|Common|Gun|18322197952|0
+Sandy|Common|Gun|18323752709|0
+Turtle|Uncommon|Knife|18322166908|0
+Popsicle|Uncommon|Gun|18322191060|0
+Jellyfish|Uncommon|Knife|18322181701|0
+Waves|Rare|Knife|18322178053|0
+Floral|Rare|Gun|18323751219|0
+Palms|Legendary|Knife|18322137551|0
+Starfish|Common|Gun|18322189584|0
+Clownfish|Common|Knife|18322183619|0
+Floatie|Uncommon|Gun|18322194067|0
+Sharky|Rare|Knife|18322179563|0
+Palms|Legendary|Gun|18322192817|0
+Pearl|Godly|Knife|18322621319|0
+Pearlshine|Godly|Gun|18322646152|0
+Watergun|Godly|Gun|18351388416|0
+Watergun|Godly|Gun|18351401528|1
+Candy Corn|Common|Gun|117473869340749|0
+Ghosts|Common|Knife|134681523511387|0
+Stickers|Common|Gun|108122054293502|0
+Bats|Common|Knife|104747488009018|0
+Bones|Uncommon|Knife|76461209737867|0
+Witch\'s Brew|Uncommon|Knife|108331177567412|0
+Leaves|Uncommon|Gun|129970927613267|0
+Kraken|Rare|Knife|116059045830205|0
+Ritual|Rare|Gun|122021199074749|0
+Cursed|Legendary|Gun|122855768693454|0
+Candy Corn|Common|Knife|115093067149752|0
+Bats|Common|Gun|71258273720666|0
+Stickers|Common|Knife|120248733900674|0
+Candles|Common|Knife|133654810681274|0
+Monster|Uncommon|Knife|109292073070223|0
+Moons|Uncommon|Knife|91446990047399|0
+Clown|Uncommon|Gun|71982363966070|0
+Storm|Rare|Knife|97369825731567|0
+Candleflame|Rare|Gun|90595111293037|0
+Cursed|Legendary|Knife|132565936309463|0
+Spirit|Godly|Knife|107190526940939|0
+Soul|Godly|Gun|75233248021696|0
+Vampire\'s Axe|Ancient|Knife|130837676383567|0
+Vampire\'s Axe|Unique|Knife|130837676383567|0
+Vampire\'s Gun|Godly|Gun|90274872705656|0
+Constellation|Godly|Gun|114197436469014|0
+Celestial|Ancient|Knife|136673966529736|0
+Red Constellation|Unique|Gun|85766514163212|0
+Bronze Constellation|Unique|Gun|112811587103866|0
+Silver Constellation|Unique|Gun|100747436297625|0
+Gold Constellation|Unique|Gun|132975248521820|0
+Red Celestial|Unique|Knife|119157529694972|0
+Bronze Celestial|Unique|Knife|119399643874968|0
+Silver Celestial|Unique|Knife|90241292303974|0
+Gold Celestial|Unique|Knife|104229967982042|0
+Australis|Godly|Knife|101343256002049|0
+Borealis|Godly|Gun|108635848059846|0
+Bauble|Godly|Gun|84481559639371|0
+Hot Chocolate|Common|Knife|133307062463653|0
+Gifts|Common|Knife|129290011017110|0
+Igloo|Common|Gun|95517099886712|0
+Stickers|Common|Knife|83843575465564|0
+Gingerheart|Uncommon|Knife|115273559455814|0
+Wrapped|Uncommon|Gun|109929760056853|0
+Logcutter|Rare|Knife|71088901904009|0
+Frostflame|Rare|Knife|104988218477551|0
+Nightsky|Legendary|Gun|94311965719769|0
+Reindeer|Common|Knife|109101361674956|0
+Stockings|Common|Gun|76288270695961|0
+Igloo|Common|Knife|73203940450745|0
+Stickers|Common|Gun|91224254479440|0
+Wrapped|Uncommon|Knife|72638846676083|0
+Snowman|Uncommon|Knife|85751270338066|0
+Wreaths|Uncommon|Knife|78432760615312|0
+Frostflame|Rare|Gun|114781759936576|0
+Sleigh|Rare|Knife|74917318027165|0
+Nightstar|Legendary|Knife|113979322866878|0
+Forest|Uncommon|Gun|78199422065424|0
+Decorated|Uncommon|Knife|124860763249593|0
+Carrots|Common|Knife|76914260444878|0
+Chick|Common|Knife|116361515042274|0
+Bunnies|Legendary|Knife|90549252812333|0
+Sunny|Rare|Gun|93906279038399|0
+Meadow|Uncommon|Gun|107321881182350|0
+Butterflies|Rare|Gun|135662872427976|0
+Bloom|Godly|Knife|128553215441980|0
+Flora|Godly|Gun|138204709945147|0
+Leaves|Common|Knife|73486056426142|0
+Coconut|Common|Knife|75237025203058|0
+Stickers|Common|Knife|98868784444742|0
+Striped|Common|Gun|118530164125152|0
+Pool|Uncommon|Knife|112511843095202|0
+Soda|Uncommon|Gun|132525981806780|0
+Lava|Uncommon|Knife|131417913843701|0
+Pop Art|Rare|Knife|123269723073737|0
+Tropical|Rare|Knife|111291962899457|0
+Aquarium|Legendary|Gun|129460052425837|0
+Striped|Common|Knife|136747578920542|0
+Stickers|Common|Gun|75123474631661|0
+Dolphins|Common|Knife|133219566412887|0
+Skyline|Common|Knife|75608370390005|0
+Soda|Uncommon|Knife|89899263078420|0
+Retro|Uncommon|Knife|85299848190695|0
+Lava|Uncommon|Gun|90170220549489|0
+Neon|Rare|Gun|134429631587448|0
+Pop Art|Rare|Gun|90526048501163|0
+Aquarium|Legendary|Knife|80900354672590|0
+Synthwave|Rare|Knife||0
+Synthwave|Legendary|Knife|132040985617451|0
+Synthwave|Godly|Knife|15683175970|0
+Synthwave|Ancient|Knife|133828016595037|0
+Sunset|Godly|Knife|103526268515240|0
+Sunrise|Godly|Gun|129480661108374|0
+Blue Synthwave|Unique|Knife|122762984016505|0
+Bronze Synthwave|Unique|Knife|72230744607038|0
+Silver Synthwave|Unique|Knife|103455022994358|0
+Gold Synthwave|Unique|Knife|138834911796124|0
+UFOs|Common|Knife|97641024072972|0
+Candy Corn|Common|Gun|129781304866793|0
+Haunted|Common|Knife|90194465176219|0
+Cats|Common|Knife|140366567839959|0
+Pumpkin|Uncommon|Knife|119626042140839|0
+Treats|Uncommon|Gun|76537883908961|0
+Eyes|Uncommon|Gun|90751163516480|0
+Hologram|Rare|Gun|108751717527377|0
+Xeno|Rare|Knife|80492487454400|0
+Energized|Legendary|Gun|114403390530326|0
+Stickers|Common|Knife|100461386281007|0
+UFOs|Common|Gun|84030107970606|0
+Fall|Common|Gun|78153346812503|0
+Candy Corn|Common|Knife|86405207895194|0
+Abduction|Uncommon|Knife|107510647616718|0
+Pumpkin Patch|Uncommon|Gun|117088166092009|0
+Treats|Uncommon|Knife|115298865715727|0
+Hologram|Rare|Knife|77773918675860|0
+Xeno|Rare|Gun|139755862211442|0
+Energized|Legendary|Knife|86258299490709|0
+Xenoknife|Godly|Knife|100576599313371|0
+Xenoshot|Godly|Gun|79722325448464|0
+Alienbeam|Godly|Knife|77607127867154|0
+Raygun|Godly|Gun|139431943195380|0
+Red Raygun|Unique|Gun|132354489228618|0
+Bronze Raygun|Unique|Gun|138881346504998|0
+Silver Raygun|Unique|Gun|71511736314707|0
+Gold Raygun|Unique|Gun|76250851065456|0
+Stickers|Common|Knife|115280072896190|0
+Snow Dagger|Godly|Knife|95328449981238|0
+Red Snow Dagger|Unique|Knife|87617250559234|0
+Bronze Snow Dagger|Unique|Knife|134312132943601|0
+Silver Snow Dagger|Unique|Knife|128427983277729|0
+Gold Snow Dagger|Unique|Knife|70701057041846|0
+Snowcannon|Godly|Gun|129186939023729|0
+Red Snowcannon|Unique|Gun|110812086479763|0
+Bronze Snowcannon|Unique|Gun|84743767811732|0
+Silver Snowcannon|Unique|Gun|83838802472095|0
+Gold Snowcannon|Unique|Gun|115609046800090|0
+Snowstorm|Godly|Knife|70973050894155|0
+Blizzard|Godly|Gun|88928894807422|0
+Ornament|Godly|Knife|111092946728824|0
+Stickers|Common|Knife|102283625659356|0
+Snowball|Common|Gun|104416405402940|0
+Lights|Common|Knife|71228862432065|0
+Peppermint|Common|Gun|73148873488539|0
+Sweater|Uncommon|Knife|102130993592804|0
+Gingerbread|Uncommon|Gun|74908113882525|0
+Polar Bear|Uncommon|Knife|120422092957504|0
+Spearmint|Rare|Gun|81352860339620|0
+Gingercookie|Rare|Knife|111408683823094|0
+Frozen|Legendary|Gun|90622014285727|0
+Stickers|Common|Gun|127489830827583|0
+Peppermint|Common|Knife|84605926178412|0
+Snowball|Common|Knife|119914093248842|0
+Lights|Common|Gun|104258636970738|0
+Penguin|Common|Knife|93320180084418|0
+Sweater|Uncommon|Gun|118557229750245|0
+Ornaments|Uncommon|Knife|132504094164819|0
+Gingerbread|Uncommon|Knife|134478959354477|0
+Gingercookie|Rare|Gun|99160839686845|0
+Spearmint|Rare|Knife|98506456649552|0
+Frozen|Legendary|Knife|108996627787763|0
+Reindeer|Common|Knife|122078592955794|0
+Strawberries|Common|Knife|73897192147749|0
+Hearts|Common|Knife|99939659856909|0
+Strawberries|Common|Gun|128646835922561|0
+Plaid|Common|Gun|121681210724670|0
+Starry|Uncommon|Knife|130537925107449|0
+Blossom|Uncommon|Knife|110160120309916|0
+Paws|Uncommon|Gun|120089556380493|0
+Heartbreak|Rare|Gun|79235438948261|0
+Yummy|Rare|Knife|113677688954146|0
+Cupid|Legendary|Knife|123955324398353|0
+Heart Wand|Godly|Knife|118334707962654|0
+Heart Wand|Godly|Knife|78479059410850|1
+Sweet|Godly|Knife|126937716954396|0
+Treat|Godly|Gun|131626924640663|0
+Bubbles|Legendary|Knife|138388933477235|0
+Pier|Rare|Knife|127570773123670|0
+Sunset|Rare|Gun|120907601916735|0
+Neopolitan|Uncommon|Knife|73980008491741|0
+Floral|Uncommon|Gun|107508982214346|0
+Turtles|Uncommon|Knife|77271917200992|0
+Duckies|Common|Gun|124567820488562|0
+Tourist|Common|Knife|135606903872678|0
+Sand|Common|Knife|138109619662236|0
+Cherries|Common|Gun|96164363513384|0
+Beachy|Godly|Knife|120888453565511|0
+Sands|Godly|Gun|119213058412452|0
+Icecream|Godly|Knife|87189663191639|0
+Phaser|Rare|Knife|88433569053641|0
+Cowboy|Rare|Knife|137905346768007|0
+Laser|Rare|Knife|76785021563290|0
+Golden|Legendary|Knife|117280525154459|0
+Prince|Rare|Gun|87296563281923|0
+Shadow|Legendary|Gun|131289807674112|0
+Ghost|Uncommon|Gun|120512330305244|0
+]==]
+
+local DB, DBRarities = nil, { "All" }
+local function LoadDB()
+    if DB then return DB end
+    DB = {}
+    local seen = {}
+    for line in DB_RAW:gmatch("[^\n]+") do
+        local name, rarity, typ, id, chroma = line:match("^(.-)|(.-)|(.-)|(.-)|(.-)$")
+        if name and name ~= "" then
+            DB[#DB + 1] = { name = name, rarity = rarity, type = typ, id = id, chroma = chroma == "1" }
+            if rarity ~= "" and not seen[rarity] then
+                seen[rarity] = true
+                DBRarities[#DBRarities + 1] = rarity
+            end
+        end
+    end
+    return DB
+end
+LoadDB()
+
+local RARITY_COLOR = {
+    Common = Color3.fromRGB(200, 200, 200), Uncommon = Color3.fromRGB(110, 200, 110),
+    Rare = Color3.fromRGB(80, 140, 255), Legendary = Color3.fromRGB(190, 90, 255),
+    Godly = Color3.fromRGB(255, 150, 40), Ancient = Color3.fromRGB(255, 70, 70),
+    Unique = Color3.fromRGB(255, 220, 60), Classic = Color3.fromRGB(180, 140, 90),
+}
+
+-- Intenta saber que arma tiene un jugador (si el juego expone el nombre/ID en la tool)
+local function WeaponInfo(p, role)
+    local tool = FindTool(p, role == "Murderer" and "Knife" or "Gun")
+    if not tool then return nil end
+    local nm = tool:GetAttribute("ItemName") or tool:GetAttribute("DisplayName")
+    local idv = tool:GetAttribute("ItemID") or tool:GetAttribute("ItemId")
+    if not nm then
+        local sv = tool:FindFirstChild("ItemName")
+        if sv and sv:IsA("StringValue") then nm = sv.Value end
+    end
+    for _, it in ipairs(DB) do
+        if (nm and it.name == nm) or (idv and it.id == tostring(idv)) then return it end
+    end
+    return nil
+end
+
+----------------------------------------------------
+-- Tracker de roles (cada 0.25s) + eventos para las alertas
+----------------------------------------------------
+local Events = {}   -- funciones suscritas: fn(kind, player, extra)
+local function Emit(kind, p, extra)
+    for _, f in ipairs(Events) do pcall(f, kind, p, extra) end
+end
+
+task.spawn(function()
+    local prevGun = false
+    local prevMurd = false
+    while alive do
+        for _, p in ipairs(Players:GetPlayers()) do
+            local new = GetRole(p)
+            local old = Roles[p]
+            if old ~= new then
+                Roles[p] = new
+                if old then Emit("role", p, { old = old, new = new }) end
+            end
+        end
+        for p in pairs(Roles) do if not p.Parent then Roles[p] = nil end end
+
+        local gun = GetGunDrop() ~= nil
+        if gun and not prevGun then Emit("gundrop") end
+        prevGun = gun
+        local murd = FindByRole("Murderer") ~= nil
+        if murd and not prevMurd then Emit("roundstart") end
+        if not murd and prevMurd then Emit("roundend") end
+        prevMurd = murd
+        task.wait(0.25)
+    end
+end)
+
+----------------------------------------------------
+-- VISUALS: ESP
+----------------------------------------------------
+local ESP = {}
+local DrawOK = false
+pcall(function()
+    local l = Drawing.new("Line"); l:Remove(); DrawOK = true
+end)
+
+local function RoleColor(role)
+    if role == "Murderer" then return Ex.Col_Murd or Color3.fromRGB(255, 60, 60) end
+    if role == "Sheriff" then return Ex.Col_Sher or Color3.fromRGB(60, 140, 255) end
+    return Ex.Col_Inno or Color3.fromRGB(70, 230, 110)
+end
+
+local function ClearESP(p)
+    local e = ESP[p]
+    if not e then return end
+    pcall(function() e.hl:Destroy() end)
+    pcall(function() e.gui:Destroy() end)
+    if e.line then pcall(function() e.line:Remove() end) end
+    ESP[p] = nil
+end
+
+local function MakeESP(p, char)
+    local hl = Instance.new("Highlight")
+    hl.Name = "SahurESP"
+    hl.FillTransparency = 0.55
+    hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Adornee = char
+    hl.Parent = Gui
+
+    local gui = Instance.new("BillboardGui")
+    gui.Name = "SahurESPLabel"
+    gui.AlwaysOnTop = true
+    gui.Size = UDim2.fromOffset(180, 54)
+    gui.StudsOffset = Vector3.new(0, 3.2, 0)
+    gui.Adornee = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+    gui.Parent = Gui
+    local lbl = Instance.new("TextLabel")
+    lbl.BackgroundTransparency = 1
+    lbl.Size = UDim2.fromScale(1, 1)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 13
+    lbl.TextStrokeTransparency = 0.3
+    lbl.TextWrapped = true
+    lbl.Parent = gui
+
+    local line
+    if DrawOK then
+        pcall(function()
+            line = Drawing.new("Line")
+            line.Thickness = 1.5
+            line.Transparency = 1
+            line.Visible = false
+        end)
+    end
+    local e = { hl = hl, gui = gui, lbl = lbl, char = char, line = line }
+    ESP[p] = e
+    return e
+end
+
+local GunESP
+local function UpdateESP()
+    local me = Root(LocalPlayer)
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            local role = Roles[p] or "Innocent"
+            local char = Char(p)
+            local show = Ex.ESP and char and role ~= "Dead"
+                and (role ~= "Innocent" or Ex.ESP_Inno ~= false)
+            if not show then
+                ClearESP(p)
+            else
+                local e = ESP[p]
+                if e and (e.char ~= char or not e.hl.Parent) then ClearESP(p) e = nil end
+                if not e then e = MakeESP(p, char) end
+                local col = RoleColor(role)
+                e.hl.FillColor = col
+                e.hl.OutlineColor = col
+                e.hl.Enabled = Ex.ESP_Chams ~= false
+                e.gui.Enabled = (Ex.ESP_Name ~= false) or (Ex.ESP_Dist ~= false) or (Ex.ESP_HP == true)
+                e.lbl.TextColor3 = col
+                local parts = {}
+                if Ex.ESP_Name ~= false then
+                    parts[#parts + 1] = p.DisplayName .. (role ~= "Innocent" and (" [" .. role .. "]") or "")
+                end
+                if Ex.ESP_Weapon then
+                    local it = WeaponInfo(p, role)
+                    if it then
+                        parts[#parts + 1] = it.name .. " (" .. it.rarity .. (it.chroma and ", Chroma" or "") .. ")"
+                    end
+                end
+                local h = Hum(p)
+                local bits = {}
+                if Ex.ESP_HP and h then bits[#bits + 1] = math.floor(h.Health) .. " HP" end
+                local r = Root(p)
+                if Ex.ESP_Dist ~= false and me and r then bits[#bits + 1] = math.floor(Dist(me, r)) .. "m" end
+                if #bits > 0 then parts[#parts + 1] = table.concat(bits, " | ") end
+                e.lbl.Text = table.concat(parts, "\n")
+                e.root = r
+                e.col = col
+            end
+        end
+    end
+    for p in pairs(ESP) do
+        if not p.Parent then ClearESP(p) end
+    end
+
+    -- Arma caida
+    local gd = GetGunDrop()
+    if Ex.ESP_Gun and gd then
+        if not GunESP or not GunESP.hl.Parent or GunESP.target ~= gd then
+            if GunESP then pcall(function() GunESP.hl:Destroy() end) pcall(function() GunESP.gui:Destroy() end) end
+            local hl = Instance.new("Highlight")
+            hl.FillColor = Color3.fromRGB(255, 220, 60)
+            hl.OutlineColor = Color3.fromRGB(255, 220, 60)
+            hl.FillTransparency = 0.4
+            hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            hl.Adornee = gd
+            hl.Parent = Gui
+            local gui = Instance.new("BillboardGui")
+            gui.AlwaysOnTop = true
+            gui.Size = UDim2.fromOffset(120, 24)
+            gui.StudsOffset = Vector3.new(0, 2, 0)
+            gui.Adornee = gd:IsA("BasePart") and gd or (gd:IsA("Model") and gd.PrimaryPart) or nil
+            gui.Parent = Gui
+            local lbl = Instance.new("TextLabel")
+            lbl.BackgroundTransparency = 1
+            lbl.Size = UDim2.fromScale(1, 1)
+            lbl.Font = Enum.Font.GothamBold
+            lbl.TextSize = 14
+            lbl.TextColor3 = Color3.fromRGB(255, 220, 60)
+            lbl.TextStrokeTransparency = 0.3
+            lbl.Text = "GUN"
+            lbl.Parent = gui
+            GunESP = { hl = hl, gui = gui, target = gd }
+        end
+    elseif GunESP then
+        pcall(function() GunESP.hl:Destroy() end)
+        pcall(function() GunESP.gui:Destroy() end)
+        GunESP = nil
+    end
+end
+
+task.spawn(function()
+    while alive do
+        pcall(UpdateESP)
+        task.wait(0.15)
+    end
+end)
+
+-- Tracers (Drawing) en cada frame
+Cn(RunService.RenderStepped, function()
+    if not DrawOK then return end
+    local cam = Camera()
+    if not cam then return end
+    local vs = cam.ViewportSize
+    for _, e in pairs(ESP) do
+        if e.line then
+            local r = e.root
+            if Ex.ESP and Ex.ESP_Tracers and r and r.Parent then
+                local v, on = cam:WorldToViewportPoint(r.Position)
+                if on then
+                    e.line.From = Vector2.new(vs.X / 2, vs.Y)
+                    e.line.To = Vector2.new(v.X, v.Y)
+                    e.line.Color = e.col or Color3.new(1, 1, 1)
+                    e.line.Visible = true
+                else
+                    e.line.Visible = false
+                end
+            else
+                e.line.Visible = false
+            end
+        end
+    end
+end)
+
+table.insert(Cleanups, function()
+    for p in pairs(ESP) do ClearESP(p) end
+    if GunESP then pcall(function() GunESP.hl:Destroy() end) pcall(function() GunESP.gui:Destroy() end) end
+end)
+Cn(Players.PlayerRemoving, function(p) ClearESP(p) Roles[p] = nil end)
+
+----------------------------------------------------
+-- UI: VISUALS
+----------------------------------------------------
+do
+    local t = VisualsTab
+    t:Section({ Title = "Player ESP" })
+    AddToggle(t, "ESP", "ESP", L("Shows players through walls, colored by role.", "Muestra a los jugadores a través de paredes, con color según el rol."), false)
+    AddToggle(t, "ESP_Inno", "Show Innocents", L("Also draws innocent players (turn off to see only Murderer and Sheriff).", "También dibuja a los inocentes (apágalo para ver solo Asesino y Sheriff)."), true)
+    AddToggle(t, "ESP_Chams", "Chams", L("Colored fill and outline over the character.", "Relleno y borde de color sobre el personaje."), true)
+    AddToggle(t, "ESP_Name", "Names", L("Shows name and role above the player.", "Muestra nombre y rol sobre el jugador."), true)
+    AddToggle(t, "ESP_Dist", "Distance", L("Shows the distance in studs.", "Muestra la distancia en studs."), true)
+    AddToggle(t, "ESP_HP", "Health", L("Shows the player's health.", "Muestra la vida del jugador."), false)
+    AddToggle(t, "ESP_Tracers", "Tracers", L("Lines from the bottom of the screen to each player (needs Drawing support).", "Líneas desde abajo de la pantalla a cada jugador (requiere soporte de Drawing)."), false)
+    AddToggle(t, "ESP_Weapon", "Weapon Rarity", L("Shows the weapon skin and rarity when the game exposes it (uses the item catalog).", "Muestra el skin del arma y su rareza si el juego lo expone (usa el catálogo de items)."), false)
+    t:Section({ Title = "Objects" })
+    AddToggle(t, "ESP_Gun", "Dropped Gun ESP", L("Highlights the gun dropped when the Sheriff dies.", "Resalta el arma que se cae cuando muere el Sheriff."), false)
+    t:Section({ Title = "Colors" })
+    AddColor(t, "Col_Murd", "Murderer Color", "", Color3.fromRGB(255, 60, 60))
+    AddColor(t, "Col_Sher", "Sheriff Color", "", Color3.fromRGB(60, 140, 255))
+    AddColor(t, "Col_Inno", "Innocent Color", "", Color3.fromRGB(70, 230, 110))
+end
+
+----------------------------------------------------
+-- PLAYER (movimiento)
+----------------------------------------------------
+local last = {}
+local function Edge(key, on, onStart, onStop)
+    if on and not last[key] then
+        last[key] = true
+        if onStart then pcall(onStart) end
+    elseif not on and last[key] then
+        last[key] = false
+        if onStop then pcall(onStop) end
+    end
+end
+
+local flyBV, flyBG
+local function StopFly()
+    if flyBV then flyBV:Destroy() flyBV = nil end
+    if flyBG then flyBG:Destroy() flyBG = nil end
+    local h = Hum(LocalPlayer)
+    if h then h.PlatformStand = false end
+end
+
+local origGravity = Workspace.Gravity
+local origFOV = nil
+local lastSafe, lastSafeT = nil, 0
+
+Cn(RunService.Heartbeat, function(dt)
+    local h = Hum(LocalPlayer)
+    local r = Root(LocalPlayer)
+
+    -- WalkSpeed / JumpPower
+    Edge("ws", Ex.WS_On and h ~= nil, nil, function() if h then h.WalkSpeed = 16 end end)
+    if Ex.WS_On and h then h.WalkSpeed = Ex.WS_Val or 16 end
+    Edge("jp", Ex.JP_On and h ~= nil, nil, function() if h then h.JumpPower = 50 end end)
+    if Ex.JP_On and h then
+        h.UseJumpPower = true
+        h.JumpPower = Ex.JP_Val or 50
+    end
+
+    -- Fly
+    local flyOn = Ex.Fly and h ~= nil and r ~= nil and h.Health > 0
+    Edge("fly", flyOn, function()
+        flyBV = Instance.new("BodyVelocity")
+        flyBV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        flyBV.Velocity = Vector3.zero
+        flyBV.Parent = r
+        flyBG = Instance.new("BodyGyro")
+        flyBG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+        flyBG.P = 9e4
+        flyBG.Parent = r
+        h.PlatformStand = true
+    end, StopFly)
+    if flyOn and flyBV and flyBV.Parent then
+        local cam = Camera()
+        local sp = Ex.Fly_Speed or 50
+        local dir = h.MoveDirection
+        local vel = dir * sp
+        local up = 0
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) or h.Jump then up = up + 1 end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.Q) then up = up - 1 end
+        if cam and dir.Magnitude > 0.1 then
+            local look = cam.CFrame.LookVector
+            vel = vel + Vector3.new(0, look.Y * sp * dir.Magnitude, 0)
+        end
+        flyBV.Velocity = vel + Vector3.new(0, up * sp, 0)
+        if cam then flyBG.CFrame = cam.CFrame end
+    end
+
+    -- Spin
+    if Ex.Spin and r and not flyOn then
+        r.CFrame = r.CFrame * CFrame.Angles(0, math.rad(Ex.Spin_Speed or 20), 0)
+    end
+
+    -- Gravedad
+    Edge("grav", Ex.Grav_On, function() origGravity = Workspace.Gravity end, function() Workspace.Gravity = origGravity end)
+    if Ex.Grav_On then Workspace.Gravity = Ex.Grav_Val or 100 end
+
+    -- Anti-void
+    if Ex.AntiVoid and r then
+        if os.clock() - lastSafeT > 0.5 and h and h.FloorMaterial ~= Enum.Material.Air and r.Position.Y > Workspace.FallenPartsDestroyHeight + 150 then
+            lastSafe = r.CFrame
+            lastSafeT = os.clock()
+        end
+        if lastSafe and r.Position.Y < Workspace.FallenPartsDestroyHeight + 80 then
+            r.AssemblyLinearVelocity = Vector3.zero
+            r.CFrame = lastSafe + Vector3.new(0, 4, 0)
+        end
+    end
+end)
+
+-- FOV y zoom
+Cn(RunService.RenderStepped, function()
+    local cam = Camera()
+    if not cam then return end
+    Edge("fov", Ex.FOV_On, function() origFOV = cam.FieldOfView end, function() if origFOV then cam.FieldOfView = origFOV end end)
+    if Ex.FOV_On then cam.FieldOfView = Ex.FOV_Val or 70 end
+end)
+task.spawn(function()
+    local oMax, oMin
+    while alive do
+        Edge("zoom", Ex.Zoom_On, function()
+            oMax, oMin = LocalPlayer.CameraMaxZoomDistance, LocalPlayer.CameraMinZoomDistance
+        end, function()
+            if oMax then LocalPlayer.CameraMaxZoomDistance = oMax end
+            if oMin then LocalPlayer.CameraMinZoomDistance = oMin end
+        end)
+        if Ex.Zoom_On then
+            LocalPlayer.CameraMaxZoomDistance = 600
+            LocalPlayer.CameraMinZoomDistance = 0.5
+        end
+        task.wait(0.5)
+    end
+end)
+
+-- Noclip (tambien se activa con fly y con el farm)
+Cn(RunService.Stepped, function()
+    if (Ex.Noclip or Ex.Fly or Ex.Farm) and Char(LocalPlayer) then
+        for _, part in ipairs(Char(LocalPlayer):GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
+        end
+    end
+end)
+
+-- Salto infinito
+Cn(UserInputService.JumpRequest, function()
+    if Ex.InfJump then
+        local h = Hum(LocalPlayer)
+        if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+-- Anti AFK
+Cn(LocalPlayer.Idled, function()
+    if Ex.AntiAFK and VirtualUser then
+        pcall(function()
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+        end)
+    end
+end)
+
+table.insert(Cleanups, function()
+    StopFly()
+    local h = Hum(LocalPlayer)
+    if h then
+        if Ex.WS_On then h.WalkSpeed = 16 end
+        if Ex.JP_On then h.JumpPower = 50 end
+    end
+    if Ex.Grav_On then Workspace.Gravity = origGravity end
+    local cam = Camera()
+    if Ex.FOV_On and origFOV and cam then cam.FieldOfView = origFOV end
+end)
+
+do
+    local t = PlayerTab
+    t:Section({ Title = "Movement" })
+    AddToggle(t, "WS_On", "WalkSpeed", L("Changes your walking speed. High values can get you flagged.", "Cambia tu velocidad al caminar. Valores altos pueden marcarte."), false)
+    AddSlider(t, "WS_Val", "WalkSpeed Value", "", 16, 100, 24)
+    AddToggle(t, "JP_On", "JumpPower", L("Changes your jump height.", "Cambia la altura de tu salto."), false)
+    AddSlider(t, "JP_Val", "JumpPower Value", "", 50, 200, 70)
+    AddToggle(t, "InfJump", "Infinite Jump", L("Jump again in mid-air.", "Salta otra vez en el aire."), false)
+    AddToggle(t, "Noclip", "Noclip", L("Walk through walls and objects.", "Atraviesa paredes y objetos."), false)
+    t:Section({ Title = "Fly" })
+    AddToggle(t, "Fly", "Fly", L("PC: Space up, Shift/Q down. Mobile: jump goes up.", "PC: Espacio sube, Shift/Q baja. Móvil: saltar sube."), false)
+    AddSlider(t, "Fly_Speed", "Fly Speed", "", 10, 150, 50)
+    t:Section({ Title = "Camera" })
+    AddToggle(t, "FOV_On", "Custom FOV", "", false)
+    AddSlider(t, "FOV_Val", "FOV", "", 40, 120, 90)
+    AddToggle(t, "Zoom_On", "Unlock Zoom", L("Lets you zoom the camera far out.", "Permite alejar mucho la cámara."), false)
+    t:Section({ Title = "Safety" })
+    AddToggle(t, "AntiAFK", "Anti AFK", L("Prevents the idle kick.", "Evita que te saquen por inactividad."), true)
+    AddToggle(t, "AntiVoid", "Anti Void", L("Brings you back to your last safe spot if you fall out of the map.", "Te devuelve a tu último punto seguro si te caes del mapa."), false)
+end
+
+----------------------------------------------------
+-- COMBAT
+----------------------------------------------------
+-- Auto Grab Gun: va por el arma caida y vuelve
+task.spawn(function()
+    while alive do
+        task.wait(0.3)
+        if Ex.GrabGun then
+            local gd = GetGunDrop()
+            local r = Root(LocalPlayer)
+            if gd and r and IsAlive(LocalPlayer) and Roles[LocalPlayer] == "Innocent" then
+                local cf = PartPos(gd)
+                local safe = cf ~= nil
+                if safe and Ex.GrabSafe then
+                    local m = FindByRole("Murderer")
+                    local mr = m and Root(m)
+                    if mr and (mr.Position - cf.Position).Magnitude < 22 then safe = false end
+                end
+                if safe then
+                    if Ex.GrabMode == "Touch" and firetouchinterest and gd:IsA("BasePart") then
+                        firetouchinterest(r, gd, 0)
+                        task.wait()
+                        firetouchinterest(r, gd, 1)
+                    else
+                        local back = r.CFrame
+                        r.CFrame = cf
+                        task.wait(0.35)
+                        local r2 = Root(LocalPlayer)
+                        if r2 then r2.CFrame = back end
+                    end
+                    task.wait(1)
+                end
+            end
+        end
+    end
+end)
+
+-- Kill Aura (Murderer): equipa el cuchillo y golpea a los que estan cerca
+task.spawn(function()
+    while alive do
+        task.wait(0.15)
+        if Ex.KillAura and Roles[LocalPlayer] == "Murderer" then
+            local knife = FindTool(LocalPlayer, "Knife")
+            local char, r, h = Char(LocalPlayer), Root(LocalPlayer), Hum(LocalPlayer)
+            if knife and char and r and h then
+                if knife.Parent ~= char then
+                    h:EquipTool(knife)
+                    task.wait(0.1)
+                end
+                local handle = knife:FindFirstChild("Handle")
+                for _, p in ipairs(Players:GetPlayers()) do
+                    local role = Roles[p]
+                    if p ~= LocalPlayer and role and role ~= "Dead" then
+                        local tr = Root(p)
+                        if tr and Dist(r, tr) <= (Ex.KA_Range or 12) then
+                            pcall(function() knife:Activate() end)
+                            if handle and firetouchinterest then
+                                pcall(function()
+                                    firetouchinterest(handle, tr, 0)
+                                    firetouchinterest(handle, tr, 1)
+                                end)
+                            end
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Auto Shoot (Sheriff): apunta al asesino con prediccion y dispara si hay linea de vista
+local lastShot = 0
+task.spawn(function()
+    while alive do
+        task.wait(0.1)
+        if Ex.AutoShoot and VIM and Roles[LocalPlayer] == "Sheriff" and os.clock() - lastShot > (Ex.AS_CD or 2.5) then
+            local m = FindByRole("Murderer")
+            local mr = m and Root(m)
+            local r = Root(LocalPlayer)
+            local cam = Camera()
+            if mr and r and cam and Dist(r, mr) <= (Ex.AS_Range or 120) then
+                local params = RaycastParams.new()
+                params.FilterType = Enum.RaycastFilterType.Exclude
+                params.FilterDescendantsInstances = { Char(LocalPlayer), Char(m) }
+                local origin = cam.CFrame.Position
+                local pos = mr.Position + mr.AssemblyLinearVelocity * ((Ex.AS_Lead or 10) / 100)
+                if not Workspace:Raycast(origin, pos - origin, params) then
+                    local gun = FindTool(LocalPlayer, "Gun")
+                    local h = Hum(LocalPlayer)
+                    if gun and h then
+                        if gun.Parent ~= Char(LocalPlayer) then
+                            h:EquipTool(gun)
+                            task.wait(0.15)
+                        end
+                        local v, on = cam:WorldToScreenPoint(pos)
+                        if on then
+                            VIM:SendMouseMoveEvent(v.X, v.Y, game)
+                            task.wait(0.03)
+                            VIM:SendMouseButtonEvent(v.X, v.Y, 0, true, game, 0)
+                            task.wait(0.03)
+                            VIM:SendMouseButtonEvent(v.X, v.Y, 0, false, game, 0)
+                            lastShot = os.clock()
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+do
+    local t = CombatTab
+    t:Section({ Title = "Gun" })
+    AddToggle(t, "GrabGun", "Auto Grab Gun", L("Goes for the dropped gun and comes back.", "Va por el arma caída y regresa."), false)
+    AddToggle(t, "GrabSafe", "Safe Grab", L("Skips the gun if the Murderer is close to it.", "No va por el arma si el Asesino está cerca."), true)
+    AddDropdown(t, "GrabMode", "Grab Method", L("Teleport is the most reliable. Touch needs executor support.", "Teleport es lo más fiable. Touch necesita soporte del ejecutor."), { "Teleport", "Touch" }, "Teleport")
+    AddToggle(t, "AutoShoot", "Auto Shoot Murderer", L("Sheriff only. Aims with prediction and shoots when there is a clear line of sight.", "Solo Sheriff. Apunta con predicción y dispara si hay línea de vista libre."), false)
+    AddSlider(t, "AS_Range", "Shoot Range", "", 20, 250, 120)
+    AddSlider(t, "AS_Lead", "Prediction (x0.01s)", L("How far ahead of the Murderer to aim.", "Cuánto adelante del Asesino apuntar."), 0, 40, 10)
+    AddSlider(t, "AS_CD", "Shoot Cooldown (s)", "", 1, 6, 3)
+    t:Section({ Title = "Knife" })
+    AddToggle(t, "KillAura", "Kill Aura", L("Murderer only. Stabs players inside the range.", "Solo Asesino. Apuñala a los jugadores dentro del rango."), false)
+    AddSlider(t, "KA_Range", "Aura Range", "", 5, 25, 12)
+end
+
+----------------------------------------------------
+-- FARM
+----------------------------------------------------
+local Skipped = setmetatable({}, { __mode = "k" })
+local collected = 0
+Cn(LocalPlayer.CharacterAdded, function() collected = 0 end)
+
+local function BagCount()
+    local pg = LocalPlayer:FindFirstChild("PlayerGui")
+    local bag = pg and pg:FindFirstChild("CashBag", true)
+    if bag then
+        for _, d in ipairs(bag:GetDescendants()) do
+            if d:IsA("TextLabel") and d.Text ~= "" then
+                local n = tonumber(d.Text:match("%d+"))
+                if n then return n end
+            end
+        end
+    end
+    return nil
+end
+
+task.spawn(function()
+    while alive do
+        task.wait(0.1)
+        if Ex.Farm then
+            local r = Root(LocalPlayer)
+            local cc = GetCoinContainer()
+            if r and cc and IsAlive(LocalPlayer) then
+                local bag = BagCount() or collected
+                if Ex.Farm_Reset and bag >= (Ex.Bag_Max or 40) then
+                    collected = 0
+                    local h = Hum(LocalPlayer)
+                    if h then h.Health = 0 end
+                    task.wait(6)
+                else
+                    local avoid
+                    if Ex.Farm_Avoid then
+                        local m = FindByRole("Murderer")
+                        if m and m ~= LocalPlayer then avoid = Root(m) end
+                    end
+                    local best, bd = nil, math.huge
+                    for _, c in ipairs(cc:GetChildren()) do
+                        if c:IsA("BasePart") and (not Skipped[c] or os.clock() - Skipped[c] > 4) then
+                            local d = Dist(r, c)
+                            local bad = avoid and (avoid.Position - c.Position).Magnitude < 25
+                            if not bad and d < bd then best, bd = c, d end
+                        end
+                    end
+                    if best then
+                        local speed = Ex.Farm_Speed or 24
+                        local tw = TweenService:Create(r, TweenInfo.new(math.max(bd / speed, 0.05), Enum.EasingStyle.Linear), { CFrame = best.CFrame })
+                        tw:Play()
+                        local t0 = os.clock()
+                        while alive and Ex.Farm and best.Parent and tw.PlaybackState == Enum.PlaybackState.Playing and os.clock() - t0 < 20 do
+                            task.wait()
+                        end
+                        pcall(function() tw:Cancel() end)
+                        task.wait(0.12)
+                        if best.Parent and best.Transparency < 1 then
+                            Skipped[best] = os.clock()
+                        else
+                            collected = collected + 1
+                        end
+                    else
+                        task.wait(0.5)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+do
+    local t = FarmTab
+    t:Section({ Title = "Coins" })
+    AddToggle(t, "Farm", "Auto Farm Coins", L("Flies to the nearest coin one by one. Keep the speed low to look natural.", "Va a la moneda más cercana una por una. Deja la velocidad baja para verse natural."), false)
+    AddSlider(t, "Farm_Speed", "Farm Speed (studs/s)", L("Lower is safer.", "Menos es más seguro."), 10, 60, 24)
+    AddToggle(t, "Farm_Avoid", "Avoid Murderer", L("Skips coins that are near the Murderer.", "Salta las monedas que están cerca del Asesino."), true)
+    AddToggle(t, "Farm_Reset", "Reset When Bag Is Full", L("Resets your character when the bag reaches the limit.", "Reinicia tu personaje cuando la bolsa llega al límite."), true)
+    AddSlider(t, "Bag_Max", "Bag Limit", L("40 normal, 50 with Elite.", "40 normal, 50 con Elite."), 10, 60, 40)
+end
+
+----------------------------------------------------
+-- TELEPORTS
+----------------------------------------------------
+do
+    local t = TeleportsTab
+    local selected = ""
+    local saved
+
+    local function PlayerNames()
+        local n = {}
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then n[#n + 1] = p.Name end
+        end
+        table.sort(n)
+        if #n == 0 then n[1] = "-" end
+        return n
+    end
+
+    local function MissingMsg()
+        Notify("Teleports", L("Could not find that place right now.", "No se encontró ese lugar ahora mismo."))
+    end
+
+    t:Section({ Title = "Places" })
+    t:Button({ Title = "Lobby", Desc = "", Callback = function()
+        local lobby = Workspace:FindFirstChild("Lobby")
+        local sp = lobby and (lobby:FindFirstChildWhichIsA("SpawnLocation", true) or lobby:FindFirstChild("Spawns") and lobby.Spawns:FindFirstChildWhichIsA("BasePart", true))
+        if sp then TeleportTo(sp.CFrame) else MissingMsg() end
+    end })
+    t:Button({ Title = "Map Spawn", Desc = "", Callback = function()
+        local map = GetMap()
+        local spawns = map and map:FindFirstChild("Spawns")
+        local sp = spawns and spawns:FindFirstChildWhichIsA("BasePart", true)
+        if sp then TeleportTo(sp.CFrame) else MissingMsg() end
+    end })
+    t:Button({ Title = "Dropped Gun", Desc = "", Callback = function()
+        local cf = PartPos(GetGunDrop())
+        if cf then TeleportTo(cf) else MissingMsg() end
+    end })
+
+    t:Section({ Title = "Roles" })
+    t:Button({ Title = "To Murderer", Desc = "", Callback = function()
+        local p = FindByRole("Murderer")
+        local r = p and Root(p)
+        if r then TeleportTo(r.CFrame) else MissingMsg() end
+    end })
+    t:Button({ Title = "To Sheriff", Desc = "", Callback = function()
+        local p = FindByRole("Sheriff")
+        local r = p and Root(p)
+        if r then TeleportTo(r.CFrame) else MissingMsg() end
+    end })
+
+    t:Section({ Title = "Players" })
+    local dd = t:Dropdown({ Title = "Player", Desc = "", Values = PlayerNames(), Value = PlayerNames()[1], Callback = function(v)
+        selected = tostring(v)
+    end })
+    t:Button({ Title = "Refresh Player List", Desc = "", Callback = function()
+        pcall(function() dd:Refresh(PlayerNames()) end)
+    end })
+    t:Button({ Title = "Teleport To Player", Desc = "", Callback = function()
+        local p = Players:FindFirstChild(selected)
+        local r = p and Root(p)
+        if r then TeleportTo(r.CFrame) else MissingMsg() end
+    end })
+
+    t:Section({ Title = "Saved Position" })
+    t:Button({ Title = "Save Position", Desc = "", Callback = function()
+        local r = Root(LocalPlayer)
+        if r then
+            saved = r.CFrame
+            Notify("Teleports", L("Position saved.", "Posición guardada."))
+        end
+    end })
+    t:Button({ Title = "Teleport To Saved", Desc = "", Callback = function()
+        if saved then TeleportTo(saved) else MissingMsg() end
+    end })
+end
+
+----------------------------------------------------
+-- ALERTS
+----------------------------------------------------
+do
+    local gunSeen = false
+    Events[#Events + 1] = function(kind, p, extra)
+        if kind == "gundrop" then
+            gunSeen = true
+            if Ex.AL_Gun then Notify("Gun", L("The gun was dropped!", "¡Se cayó el arma!"), 4) end
+        elseif kind == "roundstart" then
+            gunSeen = false
+            if Ex.AL_Round then Notify("Round", L("Round started.", "Empezó la ronda."), 3) end
+        elseif kind == "roundend" then
+            gunSeen = false
+            if Ex.AL_Round then Notify("Round", L("Round ended.", "Terminó la ronda."), 3) end
+        elseif kind == "role" then
+            if p == LocalPlayer then
+                if Ex.AL_Role and (extra.new == "Murderer" or extra.new == "Sheriff") then
+                    Notify("Role", L("You are the " .. extra.new .. ".", "Eres el " .. (extra.new == "Murderer" and "Asesino" or "Sheriff") .. "."), 5)
+                end
+            else
+                if Ex.AL_Sheriff and extra.old == "Sheriff" and extra.new == "Dead" then
+                    Notify("Sheriff", L("The Sheriff died.", "Murió el Sheriff."), 4)
+                elseif Ex.AL_Pick and gunSeen and extra.old == "Innocent" and extra.new == "Sheriff" then
+                    Notify("Gun", p.DisplayName .. L(" picked up the gun.", " recogió el arma."), 4)
+                end
+            end
+        end
+    end
+
+    task.spawn(function()
+        local lastNear = 0
+        while alive do
+            task.wait(0.5)
+            if Ex.AL_Near and Roles[LocalPlayer] ~= "Murderer" and Roles[LocalPlayer] ~= "Dead" then
+                local m = FindByRole("Murderer")
+                local mr, r = m and Root(m), Root(LocalPlayer)
+                if mr and r and Dist(r, mr) <= (Ex.AL_NearDist or 30) and os.clock() - lastNear > 6 then
+                    lastNear = os.clock()
+                    Notify("Murderer", L("The Murderer is close!", "¡El Asesino está cerca!"), 3)
+                end
+            end
+        end
+    end)
+
+    local t = AlertsTab
+    t:Section({ Title = "Notifications" })
+    AddToggle(t, "AL_Role", "My Role", L("Tells you when you become Murderer or Sheriff.", "Te avisa cuando eres Asesino o Sheriff."), true)
+    AddToggle(t, "AL_Round", "Round Start / End", "", false)
+    AddToggle(t, "AL_Gun", "Gun Dropped", L("When the Sheriff dies and the gun falls.", "Cuando muere el Sheriff y cae el arma."), true)
+    AddToggle(t, "AL_Sheriff", "Sheriff Died", "", true)
+    AddToggle(t, "AL_Pick", "Gun Picked Up", L("When someone grabs the dropped gun.", "Cuando alguien recoge el arma caída."), true)
+    t:Section({ Title = "Proximity" })
+    AddToggle(t, "AL_Near", "Murderer Nearby", L("Warns you when the Murderer gets close.", "Te avisa cuando el Asesino se acerca."), false)
+    AddSlider(t, "AL_NearDist", "Warning Distance", "", 10, 80, 30)
+end
+
+----------------------------------------------------
+-- MISC
+----------------------------------------------------
+do
+    local origLight, origAtmo, origFog
+    local function RestoreLight()
+        if origLight then for k, v in pairs(origLight) do pcall(function() Lighting[k] = v end) end end
+    end
+    local function RestoreFog()
+        if origFog then for k, v in pairs(origFog) do pcall(function() Lighting[k] = v end) end end
+        if origAtmo then for a, d in pairs(origAtmo) do if a.Parent then a.Density = d end end end
+    end
+    Cn(RunService.Heartbeat, function()
+        Edge("fb", Ex.Fullbright, function()
+            origLight = { Brightness = Lighting.Brightness, ClockTime = Lighting.ClockTime, GlobalShadows = Lighting.GlobalShadows,
+                Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient }
+        end, RestoreLight)
+        if Ex.Fullbright then
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.GlobalShadows = false
+            Lighting.Ambient = Color3.fromRGB(178, 178, 178)
+            Lighting.OutdoorAmbient = Color3.fromRGB(178, 178, 178)
+        end
+        Edge("nf", Ex.NoFog, function()
+            origFog = { FogEnd = Lighting.FogEnd, FogStart = Lighting.FogStart }
+            origAtmo = {}
+            for _, a in ipairs(Lighting:GetChildren()) do
+                if a:IsA("Atmosphere") then origAtmo[a] = a.Density end
+            end
+        end, RestoreFog)
+        if Ex.NoFog then
+            Lighting.FogEnd = 1e6
+            Lighting.FogStart = 1e6
+            for a in pairs(origAtmo or {}) do if a.Parent then a.Density = 0 end end
+        end
+    end)
+    table.insert(Cleanups, function()
+        if Ex.Fullbright then RestoreLight() end
+        if Ex.NoFog then RestoreFog() end
+    end)
+
+    local t = MiscTab
+    t:Section({ Title = "World" })
+    AddToggle(t, "Fullbright", "Fullbright", L("Removes darkness and shadows.", "Quita la oscuridad y las sombras."), false)
+    AddToggle(t, "NoFog", "No Fog", "", false)
+    t:Button({ Title = "FPS Boost", Desc = L("Lowers quality and disables particles. Cannot be undone until you rejoin.", "Baja la calidad y apaga partículas. No se deshace hasta reentrar."), Callback = function()
+        pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+        Lighting.GlobalShadows = false
+        task.spawn(function()
+            for i, d in ipairs(Workspace:GetDescendants()) do
+                if d:IsA("ParticleEmitter") or d:IsA("Trail") or d:IsA("Smoke") or d:IsA("Fire") or d:IsA("Sparkles") then
+                    d.Enabled = false
+                elseif d:IsA("BasePart") then
+                    d.CastShadow = false
+                end
+                if i % 1500 == 0 then task.wait() end
+            end
+            Notify("FPS Boost", L("Done.", "Listo."))
+        end)
+    end })
+
+    t:Section({ Title = "Server" })
+    t:Button({ Title = "Rejoin", Desc = "", Callback = function()
+        pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
+    end })
+    t:Button({ Title = "Server Hop", Desc = L("Joins another public server.", "Entra a otro servidor público."), Callback = function()
+        task.spawn(function()
+            local data = Download("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")
+            local ok, j = pcall(function() return HttpService:JSONDecode(data) end)
+            if ok and type(j) == "table" and j.data then
+                local list = {}
+                for _, s in ipairs(j.data) do
+                    if s.id ~= game.JobId and s.playing and s.maxPlayers and s.playing < s.maxPlayers - 1 then
+                        list[#list + 1] = s
+                    end
+                end
+                if #list > 0 then
+                    TeleportService:TeleportToPlaceInstance(game.PlaceId, list[math.random(#list)].id, LocalPlayer)
+                    return
+                end
+            end
+            Notify("Server Hop", L("No server found.", "No se encontró servidor."))
+        end)
+    end })
+    t:Button({ Title = "Copy Job ID", Desc = "", Callback = function()
+        if setclipboard then
+            setclipboard(game.JobId)
+            Notify("Misc", L("Copied.", "Copiado."))
+        end
+    end })
+    t:Button({ Title = "Reset Character", Desc = "", Callback = function()
+        local h = Hum(LocalPlayer)
+        if h then h.Health = 0 end
+    end })
+
+    t:Section({ Title = "Item Catalog" })
+    local resPara = t:Paragraph({ Title = "Results", Desc = "-" })
+    local lastText = ""
+    local function SetRes(text)
+        lastText = text
+        local ok = pcall(function() resPara:SetDesc(text) end)
+        if not ok then Notify("Catalog", text:sub(1, 200), 6) end
+    end
+    AddInput(t, "Cat_Query", "Search Item", L("Part of the item name.", "Parte del nombre del item."), "e.g. Harvester", "")
+    AddDropdown(t, "Cat_Rarity", "Rarity", "", DBRarities, "All")
+    AddDropdown(t, "Cat_Type", "Type", "", { "All", "Knife", "Gun", "Misc" }, "All")
+    t:Button({ Title = "Search Catalog", Desc = L("Searches " .. #DB .. " items from the game database.", "Busca entre " .. #DB .. " items de la base de datos del juego."), Callback = function()
+        local q = (Ex.Cat_Query or ""):lower()
+        local out, total = {}, 0
+        for _, it in ipairs(DB) do
+            if (Ex.Cat_Rarity == "All" or it.rarity == Ex.Cat_Rarity)
+                and (Ex.Cat_Type == "All" or it.type == Ex.Cat_Type)
+                and (q == "" or it.name:lower():find(q, 1, true)) then
+                total = total + 1
+                if total <= 30 then
+                    out[#out + 1] = it.name .. "  [" .. it.rarity .. " " .. it.type .. (it.chroma and ", Chroma" or "") .. "]"
+                end
+            end
+        end
+        if total == 0 then
+            SetRes(L("No results.", "Sin resultados."))
+        else
+            SetRes(table.concat(out, "\n") .. (total > 30 and ("\n... +" .. (total - 30)) or ""))
+        end
+    end })
+    t:Button({ Title = "Copy Results", Desc = "", Callback = function()
+        if setclipboard and lastText ~= "" then
+            setclipboard(lastText)
+            Notify("Catalog", L("Copied.", "Copiado."))
+        end
+    end })
+end
+
+----------------------------------------------------
+-- FUN
+----------------------------------------------------
+do
+    Cn(UserInputService.InputBegan, function(input, gp)
+        if gp or not Ex.ClickTP then return end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            local m = LocalPlayer:GetMouse()
+            if m and m.Hit then TeleportTo(CFrame.new(m.Hit.Position)) end
+        end
+    end)
+
+    local t = FunTab
+    t:Section({ Title = "Fun" })
+    AddToggle(t, "Spin", "Spin", L("Makes your character spin.", "Hace girar a tu personaje."), false)
+    AddSlider(t, "Spin_Speed", "Spin Speed", "", 5, 60, 20)
+    AddToggle(t, "Grav_On", "Custom Gravity", L("Low gravity makes you float.", "Gravedad baja te hace flotar."), false)
+    AddSlider(t, "Grav_Val", "Gravity", L("Default is 196.", "Por defecto es 196."), 10, 300, 60)
+    AddToggle(t, "ClickTP", "Ctrl + Click Teleport", L("PC: hold Left Ctrl and click to teleport there.", "PC: mantén Ctrl izquierdo y haz clic para teletransportarte."), false)
+end
+
+----------------------------------------------------
+-- KEYBINDS + botones flotantes de las funciones
+----------------------------------------------------
+do
+    local function flip(id)
+        return function()
+            if Setters[id] then Setters[id](not Ex[id]) end
+            FX.UpdateButtons()
+        end
+    end
+    KeybindsTab:Section({ Title = "Features" })
+    AddKeybind(KeybindsTab, "Key_ESP", "Toggle ESP", "", "H", flip("ESP"))
+    AddKeybind(KeybindsTab, "Key_Fly", "Toggle Fly", "", "F", flip("Fly"))
+    AddKeybind(KeybindsTab, "Key_Noclip", "Toggle Noclip", "", "N", flip("Noclip"))
+    AddKeybind(KeybindsTab, "Key_Farm", "Toggle Auto Farm", "", "G", flip("Farm"))
+
+    AddToggle(KeybindsTab, "BtnFly", "Fly Button", L("Floating button for Fly.", "Botón flotante de Fly."), false, function() FX.UpdateButtons() end)
+    AddToggle(KeybindsTab, "BtnESP", "ESP Button", L("Floating button for ESP.", "Botón flotante de ESP."), false, function() FX.UpdateButtons() end)
+    AddToggle(KeybindsTab, "BtnNoclip", "Noclip Button", L("Floating button for Noclip.", "Botón flotante de Noclip."), false, function() FX.UpdateButtons() end)
+    AddToggle(KeybindsTab, "BtnFarm", "Farm Button", L("Floating button for Auto Farm.", "Botón flotante de Auto Farm."), false, function() FX.UpdateButtons() end)
+    MakeFloat("FLY", -10, flip("Fly"), function() return Ex.Fly end, "BtnFly")
+    MakeFloat("ESP", 50, flip("ESP"), function() return Ex.ESP end, "BtnESP")
+    MakeFloat("NC", 110, flip("Noclip"), function() return Ex.Noclip end, "BtnNoclip")
+    MakeFloat("FARM", 170, flip("Farm"), function() return Ex.Farm end, "BtnFarm")
+
+    task.spawn(function()
+        while alive do
+            task.wait(0.5)
+            pcall(FX.UpdateButtons)
+        end
+    end)
+end
+
+print("[SAHUR] Features loaded")
+end)()
+
 
 ----------------------------------------------------
 -- CONFIG SYSTEM
