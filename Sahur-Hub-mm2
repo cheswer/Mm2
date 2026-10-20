@@ -1,11 +1,11 @@
 --[[
-  SAHUR HUB  |  Murder Mystery 2 (MM2)  |  Team CHX
-  Version 2.0.0
+  SAHUR HUB  |  Murder Mystery 2 (MM2)
+  Version 1.0.0
   Tabs: Main, Info, Visuals, Player, Combat, Farm, Teleports, Alerts, Misc, Fun, Keybinds, Configs
   UI: WindUI
 ]]
 print("[SAHUR] Loading Services")
-local VERSION = "2.0.0"
+local VERSION = "1.0.0"
 local genv = (getgenv and getgenv()) or _G
 
 -- Si ya estaba cargado, se descarga la copia anterior
@@ -30,7 +30,7 @@ pcall(function()
 end)
 
 local function Msg(en, es, ru)
-    if LANG == "es" then return es or en elseif LANG == "ru" then return ru or en end
+    if LANG == "es" then return es elseif LANG == "ru" then return ru end
     return en
 end
 
@@ -350,7 +350,7 @@ local Setters = {}
 local KeyTab = {}   -- id -> tab (para el alcance de carga de las configs)
 local Actions = {}  -- id de tecla -> funcion
 local Conns = {}
-local FX = { LastKeySet = 0, HubOpen = true, Cleanups = {} }
+local FX = { LastKeySet = 0, HubOpen = true }
 local alive = true
 
 local function NotifyUI(title, content, dur)
@@ -401,6 +401,35 @@ local I18N = {
         ["Equip Weapon Button"] = "Botón de Equipar Arma", ["Round"] = "Ronda",
         ["Weapon Index"] = "Índice de Armas", ["Weapon Type"] = "Tipo de Arma", ["Rarity"] = "Rareza",
         ["Select Weapon"] = "Elegir Arma", ["Murderer"] = "Asesino",
+        ["Tracer Origin"] = "Origen del Tracer", ["Tracer Thickness"] = "Grosor del Tracer",
+        ["Hero ESP"] = "ESP del Héroe", ["Innocent ESP"] = "ESP de Inocentes", ["World ESP"] = "ESP del Mundo",
+        ["Gun ESP"] = "ESP del Arma", ["Coin ESP"] = "ESP de Monedas", ["ESP Style"] = "Estilo del ESP", ["Chams"] = "Chams",
+        ["Box"] = "Caja", ["Name Tag"] = "Etiqueta de Nombre", ["Health Bar"] = "Barra de Vida", ["Tracers"] = "Tracers",
+        ["Distance Fade"] = "Desvanecer por Distancia", ["Rainbow Colors"] = "Colores Arcoíris", ["Colors"] = "Colores",
+        ["Color Palette"] = "Paleta de Colores", ["Murderer Color"] = "Color del Asesino", ["Sheriff Color"] = "Color del Sheriff",
+        ["Hero Color"] = "Color del Héroe", ["Innocent Color"] = "Color de Inocentes", ["Target Color"] = "Color del Objetivo",
+        ["Gun Color"] = "Color del Arma", ["Coin Color"] = "Color de Monedas",
+        ["Notify Roles Reveal"] = "Avisar Revelación de Roles", ["Notify Gun Events"] = "Avisar Eventos del Arma",
+        ["Proximity"] = "Proximidad", ["Murderer Proximity Alert"] = "Alerta de Proximidad del Asesino",
+        ["Alert Distance"] = "Distancia de Alerta", ["Show Roles in Info"] = "Mostrar Roles en Info",
+        ["Movement"] = "Movimiento", ["Speed Hack"] = "Hack de Velocidad", ["Speed Value"] = "Valor de Velocidad",
+        ["Jump Boost"] = "Impulso de Salto", ["Jump Value"] = "Valor de Salto", ["Infinite Jump"] = "Salto Infinito",
+        ["Noclip"] = "Noclip", ["Fly"] = "Volar", ["Fly Speed"] = "Velocidad de Vuelo", ["Character"] = "Personaje",
+        ["Reset Character"] = "Reiniciar Personaje", ["Gun"] = "Arma de Fuego", ["Grab Gun"] = "Recoger Arma",
+        ["Auto Grab Gun"] = "Auto Recoger Arma", ["Safe Distance"] = "Distancia Segura",
+        ["Auto Farm"] = "Auto Farmeo", ["Auto Farm Coins"] = "Auto Farmear Monedas", ["Farm Mode"] = "Modo de Farmeo",
+        ["Farm Speed"] = "Velocidad de Farmeo", ["Teleport Delay"] = "Retraso de Teletransporte",
+        ["Height Offset"] = "Desplazamiento de Altura", ["Reset When No Coins"] = "Reiniciar sin Monedas", ["Farm Status"] = "Estado del Farmeo",
+        ["Quick Teleports"] = "Teletransportes Rápidos", ["Teleport to Lobby"] = "Ir al Lobby", ["Teleport to Map"] = "Ir al Mapa",
+        ["Teleport to Gun"] = "Ir al Arma", ["Teleport to Murderer"] = "Ir al Asesino", ["Teleport to Sheriff"] = "Ir al Sheriff",
+        ["Players"] = "Jugadores", ["Select Player"] = "Elegir Jugador", ["Teleport to Player"] = "Ir al Jugador",
+        ["Refresh Players"] = "Actualizar Jugadores",
+        ["View & Performance"] = "Vista y Rendimiento", ["Fullbright"] = "Fullbright", ["Brightness"] = "Brillo",
+        ["No Fog"] = "Sin Niebla", ["X-Ray"] = "Rayos X", ["X-Ray Transparency"] = "Transparencia de Rayos X",
+        ["Anti Lag"] = "Anti Lag", ["Anti AFK"] = "Anti AFK", ["Server"] = "Servidor", ["Rejoin"] = "Reconectar",
+        ["Server Hop"] = "Cambiar de Servidor",
+        ["Toggle Fly"] = "Alternar Vuelo", ["Toggle Noclip"] = "Alternar Noclip", ["Toggle Auto Farm"] = "Alternar Auto Farmeo",
+        ["Grab Gun Button"] = "Botón de Recoger Arma", ["Fly Button"] = "Botón de Vuelo",
     },
     ru = {
         ["Main"] = "Главная", ["Info"] = "Инфо", ["Visuals"] = "Визуал", ["Player"] = "Игрок",
@@ -442,6 +471,35 @@ local I18N = {
         ["Equip Weapon Button"] = "Кнопка оружия", ["Round"] = "Раунд",
         ["Weapon Index"] = "Индекс оружия", ["Weapon Type"] = "Тип оружия", ["Rarity"] = "Редкость",
         ["Select Weapon"] = "Выбрать оружие", ["Murderer"] = "Убийца",
+        ["Tracer Origin"] = "Начало трейсера", ["Tracer Thickness"] = "Толщина трейсера",
+        ["Hero ESP"] = "ESP героя", ["Innocent ESP"] = "ESP невиновных", ["World ESP"] = "ESP мира",
+        ["Gun ESP"] = "ESP пистолета", ["Coin ESP"] = "ESP монет", ["ESP Style"] = "Стиль ESP", ["Chams"] = "Чамсы",
+        ["Box"] = "Рамка", ["Name Tag"] = "Метка с именем", ["Health Bar"] = "Полоса здоровья", ["Tracers"] = "Трейсеры",
+        ["Distance Fade"] = "Затухание по расстоянию", ["Rainbow Colors"] = "Радужные цвета", ["Colors"] = "Цвета",
+        ["Color Palette"] = "Цветовая палитра", ["Murderer Color"] = "Цвет убийцы", ["Sheriff Color"] = "Цвет шерифа",
+        ["Hero Color"] = "Цвет героя", ["Innocent Color"] = "Цвет невиновных", ["Target Color"] = "Цвет цели",
+        ["Gun Color"] = "Цвет пистолета", ["Coin Color"] = "Цвет монет",
+        ["Notify Roles Reveal"] = "Сообщать раскрытие ролей", ["Notify Gun Events"] = "Сообщать события пистолета",
+        ["Proximity"] = "Близость", ["Murderer Proximity Alert"] = "Предупреждение о близости убийцы",
+        ["Alert Distance"] = "Расстояние предупреждения", ["Show Roles in Info"] = "Показывать роли в Инфо",
+        ["Movement"] = "Движение", ["Speed Hack"] = "Ускорение", ["Speed Value"] = "Значение скорости",
+        ["Jump Boost"] = "Усиленный прыжок", ["Jump Value"] = "Значение прыжка", ["Infinite Jump"] = "Бесконечный прыжок",
+        ["Noclip"] = "Noclip", ["Fly"] = "Полёт", ["Fly Speed"] = "Скорость полёта", ["Character"] = "Персонаж",
+        ["Reset Character"] = "Сбросить персонажа", ["Gun"] = "Пистолет", ["Grab Gun"] = "Подобрать пистолет",
+        ["Auto Grab Gun"] = "Авто-подбор пистолета", ["Safe Distance"] = "Безопасное расстояние",
+        ["Auto Farm"] = "Автофарм", ["Auto Farm Coins"] = "Автофарм монет", ["Farm Mode"] = "Режим фарма",
+        ["Farm Speed"] = "Скорость фарма", ["Teleport Delay"] = "Задержка телепорта",
+        ["Height Offset"] = "Смещение высоты", ["Reset When No Coins"] = "Сброс без монет", ["Farm Status"] = "Состояние фарма",
+        ["Quick Teleports"] = "Быстрые телепорты", ["Teleport to Lobby"] = "В лобби", ["Teleport to Map"] = "На карту",
+        ["Teleport to Gun"] = "К пистолету", ["Teleport to Murderer"] = "К убийце", ["Teleport to Sheriff"] = "К шерифу",
+        ["Players"] = "Игроки", ["Select Player"] = "Выбрать игрока", ["Teleport to Player"] = "К игроку",
+        ["Refresh Players"] = "Обновить игроков",
+        ["View & Performance"] = "Вид и производительность", ["Fullbright"] = "Fullbright", ["Brightness"] = "Яркость",
+        ["No Fog"] = "Без тумана", ["X-Ray"] = "Рентген", ["X-Ray Transparency"] = "Прозрачность рентгена",
+        ["Anti Lag"] = "Anti Lag", ["Anti AFK"] = "Anti AFK", ["Server"] = "Сервер", ["Rejoin"] = "Перезайти",
+        ["Server Hop"] = "Сменить сервер",
+        ["Toggle Fly"] = "Вкл/выкл полёт", ["Toggle Noclip"] = "Вкл/выкл Noclip", ["Toggle Auto Farm"] = "Вкл/выкл автофарм",
+        ["Grab Gun Button"] = "Кнопка подбора пистолета", ["Fly Button"] = "Кнопка полёта",
     },
 }
 
@@ -492,7 +550,7 @@ end
 local function KillAll()
     if not alive then return end
     alive = false
-    for _, f in ipairs(FX.Cleanups) do pcall(f) end
+    pcall(function() if FX.OnKill then FX.OnKill() end end)
     for _, c in ipairs(Conns) do pcall(function() c:Disconnect() end) end
     pcall(function() Gui:Destroy() end)
     pcall(function() Window:Destroy() end)
@@ -516,6 +574,11 @@ local FunTab       = Window:Tab({ Title = "Fun",       Icon = "smile" })
 local KeybindsTab  = Window:Tab({ Title = "Keybinds",  Icon = "keyboard" })
 local ConfigsTab   = Window:Tab({ Title = "Configs",   Icon = "settings" })
 
+-- Tabs sin funciones todavia: un aviso para que no queden en blanco
+local noFeaturesMsg = Msg("This tab has no features yet.", "Esta pestaña todavía no tiene funciones.", "В этой вкладке пока нет функций.")
+for _, t in ipairs({ FunTab }) do
+    t:Paragraph({ Title = "Coming soon", Desc = noFeaturesMsg })
+end
 
 print("[SAHUR] Loaded Tabs")
 
@@ -606,35 +669,102 @@ local function AddKeybind(tab, id, title, desc, default, action)
 end
 
 ----------------------------------------------------
--- MM2 CORE: ronda, roles, ESP, camara, equipar y armas
+-- MM2 CORE v2: roles, ESP profesional, granja, movimiento, teletransportes y vista
 ----------------------------------------------------
 print("[SAHUR] Loading MM2 Core")
+
+-- Estado compartido de la ronda (usado tambien por Info y Keybinds)
+local RS = { Role = nil, Mode = nil, Active = false, Target = nil, Seen = {}, LastStart = 0,
+    Roles = {}, Murderer = nil, Sheriff = nil, Hero = nil, RolesOK = false }
+local tRole, equippedInfo, EquipToggle, HoldingWeapon, GrabGun, FlipFlag
+
+;(function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local TeleportService = game:GetService("TeleportService")
 
-local RS = { Role = nil, Mode = nil, Active = false, Target = nil, Seen = {}, LastStart = 0 }
+local function Say(text, dur) NotifyUI("Sahur Hub", text, dur or 4) end
+local function myRoot() local c = LocalPlayer.Character return c and c:FindFirstChild("HumanoidRootPart") end
+local function myHum() local c = LocalPlayer.Character return c and c:FindFirstChildOfClass("Humanoid") end
+local function mk(class, props, parent)
+    local i = Instance.new(class)
+    for k, v in pairs(props) do i[k] = v end
+    if parent then i.Parent = parent end
+    return i
+end
+FlipFlag = function(id)
+    local v = not Ex[id]
+    if Setters[id] then Setters[id](v) else Ex[id] = v end
+end
 
-local ROLE_COLORS = {
-    Innocent = Color3.new(0, 1, 0), Sheriff = Color3.new(0, 0, 1), Murderer = Color3.new(1, 0, 0),
-    Zombie = Color3.new(0.098, 0.675, 0), Survivor = Color3.new(0.169, 0.604, 0.933),
-    Freezer = Color3.fromRGB(150, 220, 250), Runner = Color3.fromRGB(0, 200, 100),
-}
-local TARGET_COLOR = Color3.fromRGB(255, 170, 0)
+----------------------------------------------------
+-- Nombres de rol y paletas de color
+----------------------------------------------------
 local ROLE_NAMES = {
     Murderer = { es = "Asesino", ru = "Убийца" },
     Sheriff = { es = "Sheriff", ru = "Шериф" },
     Innocent = { es = "Inocente", ru = "Невиновный" },
+    Hero = { es = "Héroe", ru = "Герой" },
 }
-local function tRole(role)
+tRole = function(role)
     local n = ROLE_NAMES[role]
     if n and LANG ~= "en" then return n[LANG] or role end
     return tostring(role)
 end
-local function Say(text, dur)
-    NotifyUI("Sahur Hub", text, dur or 4)
-    if Ex.Alert_Sound and FX.Beep then pcall(FX.Beep) end
+local function roleLabel(kind)
+    if kind == "Target" then return Msg("Target", "Objetivo", "Цель") end
+    return tRole(kind)
 end
 
+local PALETTES = {
+    Default = {
+        Murderer = Color3.fromRGB(255, 59, 76), Sheriff = Color3.fromRGB(66, 153, 255), Hero = Color3.fromRGB(255, 204, 51),
+        Innocent = Color3.fromRGB(80, 220, 140), Target = Color3.fromRGB(255, 159, 67), Gun = Color3.fromRGB(255, 214, 10),
+        Coin = Color3.fromRGB(255, 196, 0),
+    },
+    Neon = {
+        Murderer = Color3.fromRGB(255, 0, 85), Sheriff = Color3.fromRGB(0, 170, 255), Hero = Color3.fromRGB(255, 238, 0),
+        Innocent = Color3.fromRGB(57, 255, 20), Target = Color3.fromRGB(255, 128, 0), Gun = Color3.fromRGB(255, 255, 0),
+        Coin = Color3.fromRGB(255, 215, 0),
+    },
+    Pastel = {
+        Murderer = Color3.fromRGB(255, 120, 130), Sheriff = Color3.fromRGB(130, 170, 255), Hero = Color3.fromRGB(255, 226, 140),
+        Innocent = Color3.fromRGB(150, 230, 180), Target = Color3.fromRGB(255, 190, 130), Gun = Color3.fromRGB(255, 236, 150),
+        Coin = Color3.fromRGB(255, 224, 130),
+    },
+    Colorblind = {
+        Murderer = Color3.fromRGB(213, 94, 0), Sheriff = Color3.fromRGB(0, 114, 178), Hero = Color3.fromRGB(240, 228, 66),
+        Innocent = Color3.fromRGB(0, 158, 115), Target = Color3.fromRGB(204, 121, 167), Gun = Color3.fromRGB(230, 159, 0),
+        Coin = Color3.fromRGB(86, 180, 233),
+    },
+    Game = {
+        Murderer = Color3.new(1, 0, 0), Sheriff = Color3.new(0, 0, 1), Hero = Color3.new(1, 1, 0),
+        Innocent = Color3.new(0, 1, 0), Target = Color3.fromRGB(255, 170, 0), Gun = Color3.new(1, 1, 0),
+        Coin = Color3.fromRGB(255, 200, 0),
+    },
+}
+local PALETTE_NAMES = { "Default", "Neon", "Pastel", "Colorblind", "Game", "Custom" }
+
+local function kindColor(kind, idx)
+    if Ex.ESP_Rainbow then
+        return Color3.fromHSV(((os.clock() * 0.25) + (idx or 0) * 0.13) % 1, 0.85, 1)
+    end
+    if Ex.ESP_Palette == "Custom" then
+        local c = Ex["Col_" .. kind]
+        if typeof(c) == "Color3" then return c end
+    end
+    local pal = PALETTES[Ex.ESP_Palette] or PALETTES.Default
+    return pal[kind] or Color3.new(1, 1, 1)
+end
+
+local ESPFolder = mk("Folder", { Name = "SahurESP" }, Gui)
+
+----------------------------------------------------
 -- Eventos de la ronda (Remotes.Gameplay)
+----------------------------------------------------
+local prevState = { revealed = false, sheriffDead = false, heroName = nil }
+
 task.spawn(function()
     local remotes = ReplicatedStorage:WaitForChild("Remotes", 15)
     local gp = remotes and remotes:WaitForChild("Gameplay", 15)
@@ -695,12 +825,99 @@ task.spawn(function()
             Say(Msg("Round ended", "La ronda terminó", "Раунд закончился"))
         end
         task.delay(10, function()
-            if not RS.Active then RS.Seen = {}; RS.Target = nil end
+            if not RS.Active then
+                RS.Seen = {}; RS.Target = nil; RS.Roles = {}
+                RS.Murderer, RS.Sheriff, RS.Hero = nil, nil, nil
+                prevState.revealed, prevState.sheriffDead, prevState.heroName = false, false, nil
+            end
         end)
     end)
 end)
 
--- Deteccion de portadores de arma (tags Weapon_Knife / Weapon_Gun)
+----------------------------------------------------
+-- Roles de todos los jugadores (servidor) + respaldo por armas visibles
+----------------------------------------------------
+local roleRF, roleFails = nil, 0
+
+local function needRoles()
+    return Ex.ESP_Murderer or Ex.ESP_Sheriff or Ex.ESP_Hero or Ex.ESP_Innocent or Ex.Notify_Reveal
+        or Ex.Notify_Gun or Ex.Alert_Prox or Ex.AutoGrab or Ex.Info_Roles
+end
+
+local function pollRoles()
+    if not roleRF or not roleRF.Parent then
+        roleRF = ReplicatedStorage:FindFirstChild("GetPlayerData", true)
+    end
+    if not roleRF or not roleRF:IsA("RemoteFunction") then
+        roleFails = roleFails + 1
+        if roleFails == 5 then warn("[SAHUR] GetPlayerData no encontrado, se usa deteccion por armas visibles") end
+        return
+    end
+    local ok, data = pcall(function() return roleRF:InvokeServer() end)
+    if not ok or type(data) ~= "table" then return end
+    RS.RolesOK = true
+    local roles, mur, sher, hero = {}, nil, nil, nil
+    for name, info in pairs(data) do
+        if type(info) == "table" then
+            local role = info.Role
+            roles[name] = { Role = role, Dead = (info.Killed or info.Dead) and true or false }
+            if role == "Murderer" then mur = name
+            elseif role == "Sheriff" then sher = name
+            elseif role == "Hero" then hero = name end
+        end
+    end
+
+    if mur and not prevState.revealed then
+        prevState.revealed = true
+        if Ex.Notify_Reveal then
+            Say(Msg("Roles revealed - Murderer: ", "Roles revelados - Asesino: ", "Роли раскрыты - Убийца: ") .. mur
+                .. " | " .. Msg("Sheriff: ", "Sheriff: ", "Шериф: ") .. tostring(sher or "-"), 6)
+        end
+    elseif not mur and prevState.revealed then
+        prevState.revealed, prevState.sheriffDead, prevState.heroName = false, false, nil
+    end
+    if sher and roles[sher] then
+        local dead = roles[sher].Dead
+        if dead and not prevState.sheriffDead then
+            prevState.sheriffDead = true
+            if Ex.Notify_Gun then
+                Say(Msg("The Sheriff died - the gun can be picked up", "El Sheriff murió - se puede recoger el arma", "Шериф погиб - можно подобрать пистолет"), 5)
+            end
+        elseif not dead then
+            prevState.sheriffDead = false
+        end
+    end
+    if hero and hero ~= prevState.heroName then
+        prevState.heroName = hero
+        if Ex.Notify_Gun then
+            Say(hero .. Msg(" picked up the gun (Hero)", " recogió el arma (Héroe)", " подобрал пистолет (Герой)"), 5)
+        end
+    end
+    RS.Roles, RS.Murderer, RS.Sheriff, RS.Hero = roles, mur, sher, hero
+end
+
+task.spawn(function()
+    while alive do
+        if needRoles() then pcall(pollRoles) end
+        task.wait(0.5)
+    end
+end)
+
+local function roleOfPlayer(plr)
+    local d = RS.Roles[plr.Name]
+    if d and d.Role then return d.Role, d.Dead end
+    local s = RS.Seen[plr.UserId]
+    if s then return s, false end
+    return nil, false
+end
+
+local function localRole()
+    local d = RS.Roles[LocalPlayer.Name]
+    if d and d.Role then return d.Role end
+    return RS.Role
+end
+
+-- Respaldo: arma visible (tags Weapon_Knife / Weapon_Gun)
 local function weaponRole(tool)
     if tool:IsA("Tool") then
         if tool:HasTag("Weapon_Knife") then return "Murderer" end
@@ -708,7 +925,6 @@ local function weaponRole(tool)
     end
     return nil
 end
-
 local function roleFromContainer(container)
     if not container then return nil end
     for _, c in ipairs(container:GetChildren()) do
@@ -717,7 +933,6 @@ local function roleFromContainer(container)
     end
     return nil
 end
-
 local function scanHolders()
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
@@ -735,93 +950,189 @@ local function scanHolders()
         end
     end
 end
-
+task.spawn(function()
+    while alive do
+        pcall(scanHolders)
+        task.wait(0.3)
+    end
+end)
 table.insert(Conns, Players.PlayerRemoving:Connect(function(plr)
     RS.Seen[plr.UserId] = nil
 end))
 
--- ESP (Highlight + etiqueta)
-local ESPFolder = Instance.new("Folder")
-ESPFolder.Name = "SahurESP"
-ESPFolder.Parent = Gui
+----------------------------------------------------
+-- ESP de jugadores (chams, caja, etiqueta, vida, tracers)
+----------------------------------------------------
 local ESPObjs = {}
+local HasDrawing = false
+pcall(function()
+    local l = Drawing.new("Line")
+    l:Remove()
+    HasDrawing = true
+end)
 
 local function clearESP(plr)
     local o = ESPObjs[plr]
-    if o then
-        pcall(function() o.hl:Destroy() end)
-        pcall(function() o.bb:Destroy() end)
-        ESPObjs[plr] = nil
+    if not o then return end
+    for _, k in ipairs({ "hl", "boxG", "hbG", "tagG", "adorn" }) do
+        pcall(function() o[k]:Destroy() end)
     end
+    if o.line then pcall(function() o.line:Remove() end) end
+    ESPObjs[plr] = nil
 end
 
-local function ensureESP(plr, char)
-    local o = ESPObjs[plr]
-    if o and o.char == char and o.hl.Parent and o.bb.Parent then return o end
-    clearESP(plr)
-    local hl = Instance.new("Highlight")
-    hl.Adornee = char
-    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    hl.OutlineTransparency = 0
-    hl.Parent = ESPFolder
-    local bb = Instance.new("BillboardGui")
-    bb.Size = UDim2.fromOffset(180, 34)
-    bb.StudsOffset = Vector3.new(0, 3.4, 0)
-    bb.AlwaysOnTop = true
-    bb.Adornee = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
-    bb.Parent = ESPFolder
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.fromScale(1, 1)
-    lbl.BackgroundTransparency = 1
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 13
-    lbl.TextStrokeTransparency = 0
-    lbl.Parent = bb
-    o = { hl = hl, bb = bb, lbl = lbl, char = char }
-    ESPObjs[plr] = o
+local function newPlayerESP(char)
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local head = char:FindFirstChild("Head") or root
+    if not root then return nil end
+    local o = { char = char }
+    o.hl = mk("Highlight", { Adornee = char, DepthMode = Enum.HighlightDepthMode.AlwaysOnTop, OutlineTransparency = 0, FillTransparency = 0.7 }, ESPFolder)
+
+    o.boxG = mk("BillboardGui", { Adornee = root, AlwaysOnTop = true, Size = UDim2.new(4, 0, 5.8, 0), LightInfluence = 0, ResetOnSpawn = false, Enabled = false }, ESPFolder)
+    local boxF = mk("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0 }, o.boxG)
+    o.boxS = mk("UIStroke", { Thickness = 1.6, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, boxF)
+
+    o.hbG = mk("BillboardGui", { Adornee = root, AlwaysOnTop = true, Size = UDim2.new(0.3, 0, 5.8, 0), StudsOffset = Vector3.new(-2.6, 0, 0), LightInfluence = 0, ResetOnSpawn = false, Enabled = false }, ESPFolder)
+    local hbBg = mk("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(12, 12, 16), BackgroundTransparency = 0.2, BorderSizePixel = 0 }, o.hbG)
+    mk("UIStroke", { Thickness = 1, Color = Color3.new(0, 0, 0) }, hbBg)
+    o.hbFill = mk("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.fromScale(1, 1), BorderSizePixel = 0 }, hbBg)
+
+    o.tagG = mk("BillboardGui", { Adornee = head, AlwaysOnTop = true, Size = UDim2.fromOffset(190, 40), StudsOffset = Vector3.new(0, 2.7, 0), LightInfluence = 0, ResetOnSpawn = false, Enabled = false }, ESPFolder)
+    local pill = mk("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(14, 14, 20), BackgroundTransparency = 0.25, BorderSizePixel = 0 }, o.tagG)
+    mk("UICorner", { CornerRadius = UDim.new(0, 8) }, pill)
+    o.pillS = mk("UIStroke", { Thickness = 1.4 }, pill)
+    o.l1 = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 20), Position = UDim2.fromOffset(0, 2), Font = Enum.Font.GothamBold, TextSize = 14, TextStrokeTransparency = 0.5, TextStrokeColor3 = Color3.new(0, 0, 0) }, pill)
+    o.l2 = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 16), Position = UDim2.fromOffset(0, 21), Font = Enum.Font.GothamMedium, TextSize = 12, TextColor3 = Color3.fromRGB(235, 235, 240), TextStrokeTransparency = 0.6 }, pill)
     return o
 end
 
-local function updateESP()
-    local anyOn = Ex.ESP_Murderer or Ex.ESP_Sheriff or Ex.ESP_Target or Ex.ESP_Innocent
-    if not anyOn then
+local function playerKind(plr)
+    local role, dead = roleOfPlayer(plr)
+    if dead then return nil end
+    local live = RS.Murderer or next(RS.Seen)
+    if role == "Murderer" and Ex.ESP_Murderer then return "Murderer" end
+    if role == "Sheriff" and Ex.ESP_Sheriff then return "Sheriff" end
+    if role == "Hero" and Ex.ESP_Hero then return "Hero" end
+    if role == "Innocent" and Ex.ESP_Innocent and live then return "Innocent" end
+    if role == nil and Ex.ESP_Innocent and live and not RS.RolesOK then return "Innocent" end
+    if Ex.ESP_Target and RS.Target and plr.Name == RS.Target then return "Target" end
+    return nil
+end
+
+local function applyPlayerESP(o, plr, kind, hum, root, dist, idx, chams, tag, cam)
+    local color = kindColor(kind, idx)
+    local fill = (tonumber(Ex.ESP_Fill) or 70) / 100
+    if Ex.ESP_Fade then fill = math.clamp(fill + dist / 400, 0, 0.95) end
+    o.hl.Enabled = chams
+    o.hl.FillColor = color
+    o.hl.OutlineColor = color:Lerp(Color3.new(1, 1, 1), 0.35)
+    o.hl.FillTransparency = fill
+
+    o.boxG.Enabled = Ex.ESP_Box and true or false
+    o.boxS.Color = color
+
+    local showHB = Ex.ESP_Health and true or false
+    o.hbG.Enabled = showHB
+    if showHB then
+        local r = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+        o.hbFill.Size = UDim2.fromScale(1, r)
+        o.hbFill.BackgroundColor3 = Color3.fromHSV(r * 0.33, 0.85, 1)
+    end
+
+    o.tagG.Enabled = tag
+    if tag then
+        o.pillS.Color = color
+        o.l1.TextColor3 = color
+        o.l1.Text = roleLabel(kind)
+        local parts = {}
+        if Ex.ESP_Names then parts[#parts + 1] = plr.DisplayName end
+        if Ex.ESP_Dist then parts[#parts + 1] = string.format("[%dm]", math.floor(dist + 0.5)) end
+        local line2 = table.concat(parts, "  ")
+        o.l2.Text = line2
+        o.l2.Visible = line2 ~= ""
+        o.tagG.Size = UDim2.fromOffset(190, line2 ~= "" and 40 or 24)
+    end
+
+    local origin = Ex.Tracer_Origin or "Character"
+    local thick = tonumber(Ex.Tracer_Thick) or 2
+    local use3D = Ex.ESP_Tracers and (origin == "Character" or not HasDrawing)
+    if use3D then
+        local myR = myRoot()
+        local len = myR and (root.Position - myR.Position).Magnitude or 0
+        if myR and len > 0.5 then
+            if not o.adorn or not o.adorn.Parent then
+                o.adorn = mk("LineHandleAdornment", { AlwaysOnTop = true, ZIndex = 3, Transparency = 0.1 }, ESPFolder)
+            end
+            o.adorn.Adornee = myR
+            o.adorn.CFrame = myR.CFrame:ToObjectSpace(CFrame.lookAt(myR.Position, root.Position))
+            o.adorn.Length = len
+            o.adorn.Thickness = thick
+            o.adorn.Color3 = color
+            o.adorn.Visible = true
+        elseif o.adorn then
+            o.adorn.Visible = false
+        end
+    elseif o.adorn then
+        o.adorn.Visible = false
+    end
+    if Ex.ESP_Tracers and HasDrawing and cam and origin ~= "Character" then
+        if not o.line then
+            o.line = Drawing.new("Line")
+            o.line.Transparency = 1
+        end
+        local v, onScreen = cam:WorldToViewportPoint(root.Position)
+        o.line.Visible = onScreen
+        if onScreen then
+            local vp = cam.ViewportSize
+            local from
+            if origin == "Center" then from = Vector2.new(vp.X / 2, vp.Y / 2)
+            elseif origin == "Top" then from = Vector2.new(vp.X / 2, 0)
+            elseif origin == "Mouse" then from = UserInputService:GetMouseLocation()
+            else from = Vector2.new(vp.X / 2, vp.Y) end
+            o.line.From = from
+            o.line.To = Vector2.new(v.X, v.Y)
+            o.line.Color = color
+            o.line.Thickness = thick
+        end
+    elseif o.line then
+        o.line.Visible = false
+    end
+end
+
+local function updatePlayers()
+    local anyKind = Ex.ESP_Murderer or Ex.ESP_Sheriff or Ex.ESP_Hero or Ex.ESP_Innocent or Ex.ESP_Target
+    if not anyKind then
         for plr in pairs(ESPObjs) do clearESP(plr) end
         return
     end
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local cam = workspace.CurrentCamera
+    local root0 = myRoot()
+    local anyStyle = Ex.ESP_Chams or Ex.ESP_Box or Ex.ESP_Tag or Ex.ESP_Health or Ex.ESP_Tracers
+    local chams = (Ex.ESP_Chams or not anyStyle) and true or false
+    local tag = (Ex.ESP_Tag or not anyStyle) and true or false
+    local maxD = tonumber(Ex.ESP_MaxDist) or 0
+    local idx = 0
     for _, plr in ipairs(Players:GetPlayers()) do
+        idx = idx + 1
         if plr ~= LocalPlayer then
-            local color, label
-            local role = RS.Seen[plr.UserId]
-            if role == "Murderer" and Ex.ESP_Murderer then
-                color, label = ROLE_COLORS.Murderer, tRole("Murderer")
-            elseif role == "Sheriff" and Ex.ESP_Sheriff then
-                color, label = ROLE_COLORS.Sheriff, tRole("Sheriff")
-            elseif Ex.ESP_Target and RS.Target and plr.Name == RS.Target then
-                color, label = TARGET_COLOR, Msg("Target", "Objetivo", "Цель")
-            elseif Ex.ESP_Innocent and role == nil and RS.Active and plr:GetAttribute("Alive") ~= false then
-                color, label = ROLE_COLORS.Innocent, tRole("Innocent")
-            end
+            local kind = playerKind(plr)
             local char = plr.Character
             local root = char and char:FindFirstChild("HumanoidRootPart")
-            local show = color ~= nil and root ~= nil
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local show = kind ~= nil and root ~= nil and hum ~= nil and hum.Health > 0
             local dist = 0
-            if show and myRoot then
-                dist = (root.Position - myRoot.Position).Magnitude
-                local maxD = tonumber(Ex.ESP_MaxDist) or 0
+            if show and root0 then
+                dist = (root.Position - root0.Position).Magnitude
                 if maxD > 0 and dist > maxD then show = false end
             end
             if show then
-                local o = ensureESP(plr, char)
-                o.hl.FillColor = color
-                o.hl.OutlineColor = color
-                o.hl.FillTransparency = (tonumber(Ex.ESP_Fill) or 70) / 100
-                local text = label
-                if Ex.ESP_Names then text = plr.DisplayName .. " - " .. text end
-                if Ex.ESP_Dist then text = text .. string.format(" [%d]", math.floor(dist + 0.5)) end
-                o.lbl.Text = text
-                o.lbl.TextColor3 = color
+                local o = ESPObjs[plr]
+                if not o or o.char ~= char or not o.hl.Parent then
+                    clearESP(plr)
+                    o = newPlayerESP(char)
+                    ESPObjs[plr] = o
+                end
+                if o then applyPlayerESP(o, plr, kind, hum, root, dist, idx, chams, tag, cam) end
             else
                 clearESP(plr)
             end
@@ -832,15 +1143,398 @@ local function updateESP()
     end
 end
 
+local espAcc = 0
+table.insert(Conns, RunService.RenderStepped:Connect(function(dt)
+    espAcc = espAcc + dt
+    if espAcc < 0.04 then return end
+    espAcc = 0
+    pcall(updatePlayers)
+end))
+
+----------------------------------------------------
+-- Arma caida (GunDrop): ESP, aviso y recogida
+----------------------------------------------------
+local GunDrop = workspace:FindFirstChild("GunDrop", true)
+local function gunPart()
+    local d = GunDrop
+    if not d or not d:IsDescendantOf(workspace) then return nil end
+    if d:IsA("BasePart") then return d end
+    return d:FindFirstChildWhichIsA("BasePart", true)
+end
+table.insert(Conns, workspace.DescendantAdded:Connect(function(d)
+    if d.Name == "GunDrop" then
+        GunDrop = d
+        if Ex.Notify_Gun then
+            Say(Msg("The gun was dropped", "Se cayó el arma", "Пистолет упал"), 4)
+        end
+    end
+end))
+
+local gunESP = nil
+local function destroyGunESP()
+    if gunESP then
+        pcall(function() gunESP.hl:Destroy() end)
+        pcall(function() gunESP.bb:Destroy() end)
+        gunESP = nil
+    end
+end
+local function updateGunESP()
+    local part = gunPart()
+    if not (Ex.ESP_Gun and part) then destroyGunESP() return end
+    if not gunESP or gunESP.part ~= part or not gunESP.hl.Parent then
+        destroyGunESP()
+        local hl = mk("Highlight", { Adornee = GunDrop:IsA("Model") and GunDrop or part, DepthMode = Enum.HighlightDepthMode.AlwaysOnTop, FillTransparency = 0.35, OutlineTransparency = 0 }, ESPFolder)
+        local bb = mk("BillboardGui", { Adornee = part, AlwaysOnTop = true, Size = UDim2.fromOffset(120, 24), StudsOffset = Vector3.new(0, 2.2, 0), LightInfluence = 0, ResetOnSpawn = false }, ESPFolder)
+        local pill = mk("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(14, 14, 20), BackgroundTransparency = 0.25, BorderSizePixel = 0 }, bb)
+        mk("UICorner", { CornerRadius = UDim.new(0, 8) }, pill)
+        local stroke = mk("UIStroke", { Thickness = 1.4 }, pill)
+        local lbl = mk("TextLabel", { BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Font = Enum.Font.GothamBold, TextSize = 13, TextStrokeTransparency = 0.5 }, pill)
+        gunESP = { part = part, hl = hl, bb = bb, stroke = stroke, lbl = lbl }
+    end
+    local color = kindColor("Gun", 3)
+    gunESP.hl.FillColor = color
+    gunESP.hl.OutlineColor = color:Lerp(Color3.new(1, 1, 1), 0.35)
+    gunESP.stroke.Color = color
+    gunESP.lbl.TextColor3 = color
+    local root = myRoot()
+    local d = root and (part.Position - root.Position).Magnitude or 0
+    gunESP.lbl.Text = string.format(Msg("GUN [%dm]", "ARMA [%dm]", "ПИСТОЛЕТ [%dm]"), math.floor(d + 0.5))
+end
+
+local function hasGun()
+    local function chk(cont)
+        if cont then
+            for _, t in ipairs(cont:GetChildren()) do
+                if t:IsA("Tool") and t:HasTag("Weapon_Gun") then return true end
+            end
+        end
+        return false
+    end
+    return chk(LocalPlayer.Character) or chk(LocalPlayer:FindFirstChildOfClass("Backpack"))
+end
+
+local function grabGun(manual)
+    local part = gunPart()
+    local root = myRoot()
+    if not part then
+        if manual then Say(Msg("There is no gun on the ground", "No hay arma en el suelo", "На земле нет пистолета")) end
+        return false
+    end
+    if not root then return false end
+    if localRole() == "Murderer" then
+        if manual then Say(Msg("The Murderer cannot pick up the gun", "El Asesino no puede recoger el arma", "Убийца не может подобрать пистолет")) end
+        return false
+    end
+    local back = root.CFrame
+    local got = false
+    if firetouchinterest then
+        pcall(function()
+            firetouchinterest(root, part, 0)
+            task.wait(0.05)
+            firetouchinterest(root, part, 1)
+        end)
+        task.wait(0.15)
+        got = hasGun()
+    end
+    if not got then
+        root.CFrame = part.CFrame + Vector3.new(0, 1.5, 0)
+        local t0 = os.clock()
+        while os.clock() - t0 < 0.7 and not hasGun() do task.wait(0.05) end
+        root.CFrame = back
+        got = hasGun()
+    end
+    if manual or got then
+        Say(got and Msg("Gun picked up", "Arma recogida", "Пистолет подобран")
+            or Msg("Could not pick up the gun", "No se pudo recoger el arma", "Не удалось подобрать пистолет"))
+    end
+    return got
+end
+GrabGun = function() task.spawn(grabGun, true) end
+
+local lastGrab = 0
 task.spawn(function()
     while alive do
-        pcall(scanHolders)
-        pcall(updateESP)
+        if Ex.AutoGrab and gunPart() and os.clock() - lastGrab > 3 and not hasGun() and localRole() ~= "Murderer" then
+            local ok = true
+            local safe = tonumber(Ex.GrabSafe) or 0
+            if safe > 0 and RS.Murderer then
+                local mp = Players:FindFirstChild(RS.Murderer)
+                local mr = mp and mp.Character and mp.Character:FindFirstChild("HumanoidRootPart")
+                local gp = gunPart()
+                if mr and gp and (mr.Position - gp.Position).Magnitude < safe then ok = false end
+            end
+            if ok then
+                lastGrab = os.clock()
+                pcall(grabGun, false)
+            end
+        end
         task.wait(0.25)
     end
 end)
 
+----------------------------------------------------
+-- Monedas: contenedor, ESP y auto farm
+----------------------------------------------------
+local containerCache, containerAt = nil, 0
+local function getContainer()
+    if containerCache and containerCache.Parent then return containerCache end
+    containerCache = nil
+    if os.clock() - containerAt < 1.2 then return nil end
+    containerAt = os.clock()
+    containerCache = workspace:FindFirstChild("CoinContainer", true)
+    return containerCache
+end
+local function listCoins()
+    local cont = getContainer()
+    local out = {}
+    if cont then
+        for _, c in ipairs(cont:GetChildren()) do
+            if c.Name == "Coin_Server" then
+                local p = c:IsA("BasePart") and c or c:FindFirstChildWhichIsA("BasePart")
+                if p then out[#out + 1] = p end
+            end
+        end
+    end
+    return out
+end
+
+local coinAdorns = {}
+local function clearCoinESP()
+    for p, a in pairs(coinAdorns) do
+        pcall(function() a:Destroy() end)
+        coinAdorns[p] = nil
+    end
+end
+local function updateCoinESP()
+    if not Ex.ESP_Coins then
+        if next(coinAdorns) then clearCoinESP() end
+        return
+    end
+    local seen = {}
+    for i, p in ipairs(listCoins()) do
+        if i > 80 then break end
+        seen[p] = true
+        local a = coinAdorns[p]
+        if not a or not a.Parent then
+            a = mk("BoxHandleAdornment", { Adornee = p, AlwaysOnTop = true, ZIndex = 5, Size = Vector3.new(1.6, 1.6, 1.6), Transparency = 0.35 }, ESPFolder)
+            coinAdorns[p] = a
+        end
+        a.Color3 = kindColor("Coin", i)
+    end
+    for p, a in pairs(coinAdorns) do
+        if not seen[p] or not p.Parent then
+            pcall(function() a:Destroy() end)
+            coinAdorns[p] = nil
+        end
+    end
+end
+
+task.spawn(function()
+    while alive do
+        pcall(updateGunESP)
+        pcall(updateCoinESP)
+        task.wait(0.2)
+    end
+end)
+
+-- Noclip (compartido con el farm)
+local noclipSaved, noclipOn = {}, false
+local Farm = { active = false, blacklist = {}, collected = 0, idleSince = nil, status = "-", lastContainer = nil }
+local function applyNoclip(on)
+    local char = LocalPlayer.Character
+    if not char then return end
+    for _, p in ipairs(char:GetDescendants()) do
+        if p:IsA("BasePart") then
+            if on then
+                if noclipSaved[p] == nil then noclipSaved[p] = p.CanCollide end
+                p.CanCollide = false
+            elseif noclipSaved[p] ~= nil then
+                p.CanCollide = noclipSaved[p]
+                noclipSaved[p] = nil
+            end
+        end
+    end
+end
+table.insert(Conns, RunService.Stepped:Connect(function()
+    local want = (Ex.Noclip or Farm.active) and true or false
+    if want or noclipOn then
+        pcall(applyNoclip, want)
+        noclipOn = want
+    end
+end))
+
+local function setHold(on)
+    local root = myRoot()
+    if not root then return end
+    local bv = root:FindFirstChild("SahurHold")
+    if on and not bv then
+        mk("BodyVelocity", { Name = "SahurHold", MaxForce = Vector3.new(1e8, 1e8, 1e8), Velocity = Vector3.zero }, root)
+    elseif not on and bv then
+        bv:Destroy()
+    end
+end
+
+local function nextCoin(root)
+    local best, bestD
+    local now = os.clock()
+    for _, p in ipairs(listCoins()) do
+        local bl = Farm.blacklist[p]
+        if p.Parent and not (bl and now - bl < 45) then
+            local d = (p.Position - root.Position).Magnitude
+            if not bestD or d < bestD then best, bestD = p, d end
+        end
+    end
+    return best, bestD
+end
+
+task.spawn(function()
+    while alive do
+        if Ex.AutoFarm then
+            local root, hum = myRoot(), myHum()
+            if root and hum and hum.Health > 0 then
+                local cont = getContainer()
+                if cont ~= Farm.lastContainer then
+                    Farm.lastContainer = cont
+                    Farm.blacklist = {}
+                    Farm.idleSince = nil
+                end
+                Farm.active = true
+                setHold(true)
+                local coin, d = nextCoin(root)
+                if coin then
+                    Farm.idleSince = nil
+                    Farm.status = Msg("Collecting coins", "Recogiendo monedas", "Сбор монет")
+                    local target = coin.CFrame * CFrame.new(0, tonumber(Ex.FarmY) or 0, 0)
+                    if Ex.FarmMode == "Teleport" then
+                        root.CFrame = target
+                        task.wait((tonumber(Ex.FarmDelay) or 20) / 100)
+                    else
+                        local speed = math.max(tonumber(Ex.FarmSpeed) or 26, 5)
+                        local dur = d / speed
+                        local tw = TweenService:Create(root, TweenInfo.new(dur, Enum.EasingStyle.Linear), { CFrame = target })
+                        tw:Play()
+                        local t0 = os.clock()
+                        while alive and Ex.AutoFarm and coin.Parent and os.clock() - t0 < dur + 0.5 do task.wait(0.03) end
+                        pcall(function() tw:Cancel() end)
+                        task.wait(0.12)
+                    end
+                    Farm.blacklist[coin] = os.clock()
+                    Farm.collected = Farm.collected + 1
+                else
+                    Farm.status = Msg("Waiting for coins", "Esperando monedas", "Ожидание монет")
+                    Farm.idleSince = Farm.idleSince or os.clock()
+                    if Ex.FarmReset and cont and os.clock() - Farm.idleSince > 4 then
+                        hum.Health = 0
+                        Farm.idleSince = nil
+                    end
+                    task.wait(0.4)
+                end
+            else
+                task.wait(0.5)
+            end
+        else
+            if Farm.active then
+                Farm.active = false
+                Farm.status = "-"
+                setHold(false)
+            end
+            task.wait(0.3)
+        end
+    end
+end)
+
+----------------------------------------------------
+-- Movimiento: velocidad, salto, salto infinito y vuelo
+----------------------------------------------------
+local applied = { speed = false, jump = false }
+local orig = { ws = 16, jp = 50, jh = 7.2 }
+local flyState = { on = false, bv = nil, bg = nil }
+
+local function stopFly()
+    if flyState.bv then pcall(function() flyState.bv:Destroy() end) flyState.bv = nil end
+    if flyState.bg then pcall(function() flyState.bg:Destroy() end) flyState.bg = nil end
+    local hum = myHum()
+    if hum and flyState.on then hum.PlatformStand = false end
+    flyState.on = false
+end
+
+table.insert(Conns, RunService.Heartbeat:Connect(function()
+    local hum = myHum()
+    if not hum then return end
+
+    if Ex.SpeedOn then
+        if not applied.speed then orig.ws = hum.WalkSpeed; applied.speed = true end
+        hum.WalkSpeed = tonumber(Ex.SpeedVal) or 30
+    elseif applied.speed then
+        hum.WalkSpeed = orig.ws
+        applied.speed = false
+    end
+
+    if Ex.JumpOn then
+        if not applied.jump then orig.jp = hum.JumpPower; orig.jh = hum.JumpHeight; applied.jump = true end
+        local v = tonumber(Ex.JumpVal) or 80
+        if hum.UseJumpPower then hum.JumpPower = v else hum.JumpHeight = v / 7.2 end
+    elseif applied.jump then
+        hum.JumpPower = orig.jp
+        hum.JumpHeight = orig.jh
+        applied.jump = false
+    end
+
+    if Ex.Fly then
+        local root = myRoot()
+        local cam = workspace.CurrentCamera
+        if root and cam and hum.Health > 0 then
+            if not flyState.bv or not flyState.bv.Parent then
+                flyState.bv = mk("BodyVelocity", { Name = "SahurFlyBV", MaxForce = Vector3.new(1e8, 1e8, 1e8), Velocity = Vector3.zero }, root)
+            end
+            if not flyState.bg or not flyState.bg.Parent then
+                flyState.bg = mk("BodyGyro", { Name = "SahurFlyBG", MaxTorque = Vector3.new(1e8, 1e8, 1e8), P = 9e4, CFrame = cam.CFrame }, root)
+            end
+            hum.PlatformStand = true
+            flyState.on = true
+            local speed = tonumber(Ex.FlySpeed) or 50
+            local md = hum.MoveDirection
+            local vel = Vector3.zero
+            if md.Magnitude > 0.05 then
+                local look, right = cam.CFrame.LookVector, cam.CFrame.RightVector
+                local flat = Vector3.new(look.X, 0, look.Z)
+                local flatR = Vector3.new(right.X, 0, right.Z)
+                local f = flat.Magnitude > 0.01 and md:Dot(flat.Unit) or 0
+                local s = flatR.Magnitude > 0.01 and md:Dot(flatR.Unit) or 0
+                vel = (look * f + right * s) * speed
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then vel = vel + Vector3.new(0, speed, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                vel = vel - Vector3.new(0, speed, 0)
+            end
+            flyState.bv.Velocity = vel
+            flyState.bg.CFrame = cam.CFrame
+        end
+    elseif flyState.on or flyState.bv or flyState.bg then
+        stopFly()
+    end
+end))
+
+table.insert(Conns, UserInputService.JumpRequest:Connect(function()
+    if Ex.InfJump then
+        local hum = myHum()
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end))
+
+local okVU, VirtualUser = pcall(function() return game:GetService("VirtualUser") end)
+table.insert(Conns, LocalPlayer.Idled:Connect(function()
+    if Ex.AntiAFK and okVU then
+        pcall(function()
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+        end)
+    end
+end))
+
+----------------------------------------------------
 -- Camara
+----------------------------------------------------
 local camNow = workspace.CurrentCamera
 local CamDefault = { Zoom = LocalPlayer.CameraMaxZoomDistance, Fov = camNow and camNow.FieldOfView or 70 }
 
@@ -860,12 +1554,173 @@ table.insert(Conns, RunService.RenderStepped:Connect(function()
     end
 end))
 
+----------------------------------------------------
+-- Vista y rendimiento: fullbright, sin niebla, rayos X, anti lag
+----------------------------------------------------
+local lightOrig = nil
+local atmoOrig = {}
+local fbApplied, fogApplied = false, false
+
+local function saveLighting()
+    if not lightOrig then
+        lightOrig = {
+            Brightness = Lighting.Brightness, ClockTime = Lighting.ClockTime, FogEnd = Lighting.FogEnd,
+            FogStart = Lighting.FogStart, GlobalShadows = Lighting.GlobalShadows,
+            Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient,
+        }
+    end
+end
+
+local xrayParts, xrayMap, xrayVal = {}, nil, nil
+local function restoreXray()
+    for p in pairs(xrayParts) do
+        pcall(function() p.LocalTransparencyModifier = 0 end)
+        xrayParts[p] = nil
+    end
+    xrayMap, xrayVal = nil, nil
+end
+
+local lagDisabled, lagConn, lagQuality, lagShadows = {}, nil, nil, nil
+local function lagKill(inst)
+    if inst:IsA("ParticleEmitter") or inst:IsA("Trail") or inst:IsA("Smoke") or inst:IsA("Fire") or inst:IsA("Sparkles") then
+        if inst.Enabled then
+            lagDisabled[inst] = true
+            inst.Enabled = false
+        end
+    end
+end
+local function lagOn()
+    pcall(function()
+        lagQuality = settings().Rendering.QualityLevel
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    end)
+    lagShadows = Lighting.GlobalShadows
+    Lighting.GlobalShadows = false
+    for _, d in ipairs(workspace:GetDescendants()) do pcall(lagKill, d) end
+    lagConn = workspace.DescendantAdded:Connect(function(d) pcall(lagKill, d) end)
+end
+local function lagOff()
+    if lagConn then lagConn:Disconnect() lagConn = nil end
+    for inst in pairs(lagDisabled) do
+        pcall(function() inst.Enabled = true end)
+        lagDisabled[inst] = nil
+    end
+    if lagQuality then pcall(function() settings().Rendering.QualityLevel = lagQuality end) lagQuality = nil end
+    if lagShadows ~= nil then Lighting.GlobalShadows = lagShadows lagShadows = nil end
+end
+
+local function restoreLighting()
+    if lightOrig then
+        if fbApplied then
+            Lighting.Brightness = lightOrig.Brightness
+            Lighting.ClockTime = lightOrig.ClockTime
+            Lighting.GlobalShadows = lightOrig.GlobalShadows
+            Lighting.Ambient = lightOrig.Ambient
+            Lighting.OutdoorAmbient = lightOrig.OutdoorAmbient
+        end
+        if fogApplied then
+            Lighting.FogEnd = lightOrig.FogEnd
+            Lighting.FogStart = lightOrig.FogStart
+            for a, dens in pairs(atmoOrig) do pcall(function() a.Density = dens end) end
+        end
+    end
+    fbApplied, fogApplied = false, false
+end
+
+task.spawn(function()
+    local lagActive = false
+    while alive do
+        pcall(function()
+            if Ex.Fullbright then
+                saveLighting()
+                Lighting.Brightness = tonumber(Ex.FBLevel) or 2
+                Lighting.ClockTime = 14
+                Lighting.GlobalShadows = false
+                Lighting.Ambient = Color3.fromRGB(170, 170, 170)
+                Lighting.OutdoorAmbient = Color3.fromRGB(170, 170, 170)
+                fbApplied = true
+            elseif fbApplied then
+                Lighting.Brightness = lightOrig.Brightness
+                Lighting.ClockTime = lightOrig.ClockTime
+                Lighting.GlobalShadows = lightOrig.GlobalShadows
+                Lighting.Ambient = lightOrig.Ambient
+                Lighting.OutdoorAmbient = lightOrig.OutdoorAmbient
+                fbApplied = false
+            end
+
+            if Ex.NoFog then
+                saveLighting()
+                Lighting.FogEnd = 1e6
+                Lighting.FogStart = 1e6
+                for _, a in ipairs(Lighting:GetChildren()) do
+                    if a:IsA("Atmosphere") then
+                        if atmoOrig[a] == nil then atmoOrig[a] = a.Density end
+                        a.Density = 0
+                    end
+                end
+                fogApplied = true
+            elseif fogApplied then
+                Lighting.FogEnd = lightOrig.FogEnd
+                Lighting.FogStart = lightOrig.FogStart
+                for a, dens in pairs(atmoOrig) do pcall(function() a.Density = dens end) end
+                fogApplied = false
+            end
+
+            if Ex.Xray then
+                local cont = getContainer()
+                local map = cont and cont.Parent
+                local v = (tonumber(Ex.XrayVal) or 60) / 100
+                if map and (map ~= xrayMap or v ~= xrayVal) then
+                    restoreXray()
+                    xrayMap, xrayVal = map, v
+                    for _, p in ipairs(map:GetDescendants()) do
+                        if p:IsA("BasePart") and p.Name ~= "Coin_Server" and not p:IsDescendantOf(cont) then
+                            p.LocalTransparencyModifier = v
+                            xrayParts[p] = true
+                        end
+                    end
+                end
+            elseif next(xrayParts) then
+                restoreXray()
+            end
+
+            if Ex.AntiLag and not lagActive then lagActive = true lagOn()
+            elseif not Ex.AntiLag and lagActive then lagActive = false lagOff() end
+        end)
+        task.wait(0.5)
+    end
+end)
+
+----------------------------------------------------
+-- Alerta de proximidad del asesino
+----------------------------------------------------
+local lastProx = 0
+task.spawn(function()
+    while alive do
+        if Ex.Alert_Prox and RS.Murderer and localRole() ~= "Murderer" then
+            local md = RS.Roles[RS.Murderer]
+            local mp = Players:FindFirstChild(RS.Murderer)
+            local mroot = mp and mp.Character and mp.Character:FindFirstChild("HumanoidRootPart")
+            local root = myRoot()
+            if mroot and root and not (md and md.Dead) then
+                local d = (mroot.Position - root.Position).Magnitude
+                if d <= (tonumber(Ex.ProxDist) or 35) and os.clock() - lastProx > 4 then
+                    lastProx = os.clock()
+                    Say(string.format(Msg("Murderer nearby: %d studs", "Asesino cerca: %d studs", "Убийца рядом: %d стадов"), math.floor(d + 0.5)), 3)
+                end
+            end
+        end
+        task.wait(0.3)
+    end
+end)
+
+----------------------------------------------------
 -- Equipar / guardar arma (misma logica del boton del juego)
+----------------------------------------------------
 local function IsWeaponTool(t)
     return t:IsA("Tool") and (t:HasTag("Weapon_Knife") or t:HasTag("Weapon_Gun"))
 end
-
-local function HoldingWeapon()
+HoldingWeapon = function()
     local char = LocalPlayer.Character
     if not char then return false end
     for _, t in ipairs(char:GetChildren()) do
@@ -873,10 +1728,8 @@ local function HoldingWeapon()
     end
     return false
 end
-
-local function EquipToggle()
-    local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
+EquipToggle = function()
+    local hum = myHum()
     if not hum then return end
     local bp = LocalPlayer:FindFirstChildOfClass("Backpack")
     if bp then
@@ -887,7 +1740,9 @@ local function EquipToggle()
     if HoldingWeapon() then hum:UnequipTools() end
 end
 
+----------------------------------------------------
 -- Datos de armas del juego (Database.Sync / Modules.ProfileData)
+----------------------------------------------------
 local WeaponDB, ProfileData = nil, nil
 task.spawn(function()
     local ok, m = pcall(function()
@@ -903,7 +1758,6 @@ task.spawn(function()
     if ok and type(m) == "table" then ProfileData = m
     else warn("[SAHUR] No se pudo leer Modules.ProfileData") end
 end)
-
 local function weaponLabel(key)
     if not key then return "?" end
     local d = WeaponDB and WeaponDB[key]
@@ -912,37 +1766,181 @@ local function weaponLabel(key)
     end
     return tostring(key)
 end
-
-local function equippedInfo()
+equippedInfo = function()
     local w = ProfileData and ProfileData.Weapons and ProfileData.Weapons.Equipped
     return weaponLabel(w and w.Knife), weaponLabel(w and w.Gun)
 end
 
 ----------------------------------------------------
--- VISUALS TAB (ESP)
+-- Limpieza al destruir el script
+----------------------------------------------------
+FX.OnKill = function()
+    pcall(stopFly)
+    pcall(setHold, false)
+    pcall(applyNoclip, false)
+    pcall(restoreLighting)
+    pcall(restoreXray)
+    pcall(lagOff)
+    for plr in pairs(ESPObjs) do pcall(clearESP, plr) end
+    pcall(destroyGunESP)
+    pcall(clearCoinESP)
+    local hum = myHum()
+    if hum then
+        if applied.speed then hum.WalkSpeed = orig.ws end
+        if applied.jump then hum.JumpPower = orig.jp hum.JumpHeight = orig.jh end
+    end
+    if Ex.ZoomOn then LocalPlayer.CameraMaxZoomDistance = CamDefault.Zoom end
+    if Ex.FovOn then
+        local c = workspace.CurrentCamera
+        if c then c.FieldOfView = CamDefault.Fov end
+    end
+end
+
+----------------------------------------------------
+-- Teletransportes
+----------------------------------------------------
+local function tpCF(cf)
+    local root = myRoot()
+    if root then root.CFrame = cf return true end
+    return false
+end
+
+local function tpToPlayer(plr)
+    local c = plr and plr.Character
+    local r = c and c:FindFirstChild("HumanoidRootPart")
+    if r then return tpCF(r.CFrame * CFrame.new(0, 0, 3)) end
+    return false
+end
+
+local function tpLobby()
+    local lobby = workspace:FindFirstChild("Lobby")
+    local spot = lobby and (lobby:FindFirstChild("Spawns") or lobby)
+    local part = spot and spot:FindFirstChildWhichIsA("BasePart", true)
+    if not part then part = workspace:FindFirstChildWhichIsA("SpawnLocation", true) end
+    if part then
+        tpCF(part.CFrame + Vector3.new(0, 4, 0))
+    else
+        Say(Msg("Lobby not found", "No se encontró el lobby", "Лобби не найдено"))
+    end
+end
+
+local function tpMap()
+    local coins = listCoins()
+    local root = myRoot()
+    if coins[1] and root then
+        local best, bd
+        for _, p in ipairs(coins) do
+            local d = (p.Position - root.Position).Magnitude
+            if not bd or d < bd then best, bd = p, d end
+        end
+        tpCF(best.CFrame + Vector3.new(0, 3, 0))
+        return
+    end
+    local cont = getContainer()
+    local map = cont and cont.Parent
+    if map and map:IsA("Model") then
+        tpCF(map:GetPivot() + Vector3.new(0, 12, 0))
+    else
+        Say(Msg("There is no map loaded", "No hay mapa cargado", "Карта не загружена"))
+    end
+end
+
+local function tpRole(roleName)
+    if not roleName then
+        Say(Msg("That role is not known yet", "Ese rol todavía no se conoce", "Эта роль пока неизвестна"))
+        return
+    end
+    local plr = Players:FindFirstChild(roleName)
+    if not (plr and tpToPlayer(plr)) then
+        Say(Msg("Could not teleport to that player", "No se pudo ir a ese jugador", "Не удалось телепортироваться к игроку"))
+    end
+end
+
+local function serverHop()
+    local okG, body = pcall(function()
+        return game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")
+    end)
+    if not okG then
+        Say(Msg("Could not fetch the server list", "No se pudo obtener la lista de servidores", "Не удалось получить список серверов"))
+        return
+    end
+    local okJ, data = pcall(function() return HttpService:JSONDecode(body) end)
+    if okJ and type(data) == "table" and type(data.data) == "table" then
+        for _, s in ipairs(data.data) do
+            if s.id ~= game.JobId and s.playing and s.maxPlayers and s.playing < s.maxPlayers - 1 then
+                pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer) end)
+                return
+            end
+        end
+    end
+    Say(Msg("No other server found", "No se encontró otro servidor", "Другой сервер не найден"))
+end
+
+----------------------------------------------------
+-- VISUALS TAB
 ----------------------------------------------------
 VisualsTab:Section({ Title = "Role ESP" })
 AddToggle(VisualsTab, "ESP_Murderer", "Murderer ESP",
-    Msg("Highlights the murderer once the knife is visible (when they pull it out). Stays marked until the round ends.",
-        "Resalta al asesino cuando su cuchillo es visible (al sacarlo). Queda marcado hasta que termine la ronda.",
-        "Подсвечивает убийцу, когда виден нож (когда он его достаёт). Метка сохраняется до конца раунда."),
-    false)
+    Msg("Highlights the murderer for the whole round.", "Resalta al asesino durante toda la ronda.", "Подсвечивает убийцу весь раунд."), false)
 AddToggle(VisualsTab, "ESP_Sheriff", "Sheriff ESP",
-    Msg("Highlights whoever holds the gun once it is visible. Stays marked until the round ends.",
-        "Resalta a quien tenga el arma cuando sea visible. Queda marcado hasta que termine la ronda.",
-        "Подсвечивает владельца пистолета, когда он виден. Метка сохраняется до конца раунда."),
-    false)
+    Msg("Highlights the sheriff.", "Resalta al sheriff.", "Подсвечивает шерифа."), false)
+AddToggle(VisualsTab, "ESP_Hero", "Hero ESP",
+    Msg("Highlights the innocent who picked up the gun.", "Resalta al inocente que recogió el arma.", "Подсвечивает невиновного, взявшего пистолет."), false)
+AddToggle(VisualsTab, "ESP_Innocent", "Innocent ESP",
+    Msg("Highlights every innocent during a round.", "Resalta a todos los inocentes durante una ronda.", "Подсвечивает всех невиновных во время раунда."), false)
 AddToggle(VisualsTab, "ESP_Target", "Assassin Target ESP",
-    Msg("In Assassin mode, highlights your current target.",
-        "En modo Assassin, resalta a tu objetivo actual.",
-        "В режиме Assassin подсвечивает вашу текущую цель."),
-    false)
+    Msg("In Assassin mode, highlights your current target.", "En modo Assassin, resalta a tu objetivo actual.", "В режиме Assassin подсвечивает вашу текущую цель."), false)
+
+VisualsTab:Section({ Title = "World ESP" })
+AddToggle(VisualsTab, "ESP_Gun", "Gun ESP",
+    Msg("Marks the dropped gun with its distance.", "Marca el arma caída con su distancia.", "Отмечает упавший пистолет и расстояние до него."), false)
+AddToggle(VisualsTab, "ESP_Coins", "Coin ESP",
+    Msg("Marks the coins on the map.", "Marca las monedas del mapa.", "Отмечает монеты на карте."), false)
+
+VisualsTab:Section({ Title = "ESP Style" })
+AddToggle(VisualsTab, "ESP_Chams", "Chams",
+    Msg("Colored body highlight, visible through walls. If no style is chosen, chams and name tag are used.",
+        "Resalta el cuerpo con color, visible a través de paredes. Si no eliges estilo, se usan chams y etiqueta.",
+        "Цветная подсветка тела сквозь стены. Если стиль не выбран, используются чамсы и метка."), false)
+AddToggle(VisualsTab, "ESP_Box", "Box", "", false)
+AddToggle(VisualsTab, "ESP_Tag", "Name Tag",
+    Msg("Role label above the head.", "Etiqueta de rol sobre la cabeza.", "Метка роли над головой."), false)
+AddToggle(VisualsTab, "ESP_Health", "Health Bar", "", false)
+AddToggle(VisualsTab, "ESP_Tracers", "Tracers",
+    Msg("Lines from the bottom of the screen. Needs executor drawing support.",
+        "Líneas desde la parte baja de la pantalla. Necesita soporte de dibujo del ejecutor.",
+        "Линии от низа экрана. Нужна поддержка рисования в экзекуторе."), false)
+AddDropdown(VisualsTab, "Tracer_Origin", "Tracer Origin",
+    Msg("Character draws a 3D line from your character (works on any executor). Bottom, Center, Top and Mouse draw on screen and need drawing support.",
+        "Character dibuja una línea 3D desde tu personaje (funciona en cualquier ejecutor). Bottom, Center, Top y Mouse dibujan en pantalla y necesitan soporte de dibujo.",
+        "Character рисует 3D-линию от вашего персонажа (работает в любом экзекуторе). Bottom, Center, Top и Mouse рисуют на экране и требуют поддержки рисования."),
+    { "Character", "Bottom", "Center", "Top", "Mouse" }, "Character")
+AddSlider(VisualsTab, "Tracer_Thick", "Tracer Thickness", "", 1, 6, 2)
+AddToggle(VisualsTab, "ESP_Names", "Show Names",
+    Msg("Adds the player name to the tag.", "Añade el nombre del jugador a la etiqueta.", "Добавляет имя игрока в метку."), false)
+AddToggle(VisualsTab, "ESP_Dist", "Show Distance",
+    Msg("Adds the distance to the tag.", "Añade la distancia a la etiqueta.", "Добавляет расстояние в метку."), false)
+AddToggle(VisualsTab, "ESP_Fade", "Distance Fade",
+    Msg("Far players get a more transparent fill.", "Los jugadores lejanos tienen el relleno más transparente.", "Дальние игроки получают более прозрачную заливку."), false)
+AddToggle(VisualsTab, "ESP_Rainbow", "Rainbow Colors",
+    Msg("Cycles through colors instead of the palette.", "Cambia de color en ciclo en vez de usar la paleta.", "Меняет цвета по кругу вместо палитры."), false)
+
+VisualsTab:Section({ Title = "Colors" })
+AddDropdown(VisualsTab, "ESP_Palette", "Color Palette",
+    Msg("Default, Neon, Pastel, Colorblind (safe for color blindness), Game (original colors) or Custom (use the pickers below).",
+        "Default, Neon, Pastel, Colorblind (apta para daltonismo), Game (colores originales) o Custom (usa los selectores de abajo).",
+        "Default, Neon, Pastel, Colorblind (для дальтоников), Game (оригинальные цвета) или Custom (выбор цветов ниже)."),
+    PALETTE_NAMES, "Default")
+local DC = PALETTES.Default
+AddColor(VisualsTab, "Col_Murderer", "Murderer Color", "", DC.Murderer)
+AddColor(VisualsTab, "Col_Sheriff", "Sheriff Color", "", DC.Sheriff)
+AddColor(VisualsTab, "Col_Hero", "Hero Color", "", DC.Hero)
+AddColor(VisualsTab, "Col_Innocent", "Innocent Color", "", DC.Innocent)
+AddColor(VisualsTab, "Col_Target", "Target Color", "", DC.Target)
+AddColor(VisualsTab, "Col_Gun", "Gun Color", "", DC.Gun)
+AddColor(VisualsTab, "Col_Coin", "Coin Color", "", DC.Coin)
 
 VisualsTab:Section({ Title = "ESP Settings" })
-AddToggle(VisualsTab, "ESP_Names", "Show Names",
-    Msg("Adds the player name to the label.", "Añade el nombre del jugador a la etiqueta.", "Добавляет имя игрока к метке."), false)
-AddToggle(VisualsTab, "ESP_Dist", "Show Distance",
-    Msg("Adds the distance in studs to the label.", "Añade la distancia en studs a la etiqueta.", "Добавляет расстояние в стадах к метке."), false)
 AddSlider(VisualsTab, "ESP_MaxDist", "Max Distance",
     Msg("0 = unlimited.", "0 = sin límite.", "0 = без ограничения."), 0, 1000, 0)
 AddSlider(VisualsTab, "ESP_Fill", "Fill Transparency",
@@ -953,30 +1951,53 @@ AddSlider(VisualsTab, "ESP_Fill", "Fill Transparency",
 ----------------------------------------------------
 AlertsTab:Section({ Title = "Round Notifications" })
 AddToggle(AlertsTab, "Notify_Role", "Notify My Role",
-    Msg("Shows your role and game mode when the round starts.",
-        "Muestra tu rol y el modo de juego cuando empieza la ronda.",
-        "Показывает вашу роль и режим игры в начале раунда."), false)
+    Msg("Shows your role and game mode when the round starts.", "Muestra tu rol y el modo de juego cuando empieza la ronda.", "Показывает вашу роль и режим игры в начале раунда."), false)
+AddToggle(AlertsTab, "Notify_Reveal", "Notify Roles Reveal",
+    Msg("Announces who the murderer and the sheriff are as soon as the round assigns roles.",
+        "Avisa quién es el asesino y el sheriff en cuanto la ronda asigna los roles.",
+        "Сообщает, кто убийца и шериф, как только раунд назначает роли."), false)
 AddToggle(AlertsTab, "Notify_Round", "Notify Round Events",
     Msg("Announces the game mode while the map loads, the round start and the round end.",
         "Avisa el modo de juego al cargar el mapa, el inicio y el final de la ronda.",
         "Сообщает режим игры при загрузке карты, начало и конец раунда."), false)
+AddToggle(AlertsTab, "Notify_Gun", "Notify Gun Events",
+    Msg("Announces when the sheriff dies, when the gun drops and when someone becomes the hero.",
+        "Avisa cuando muere el sheriff, cuando cae el arma y cuando alguien se vuelve héroe.",
+        "Сообщает, когда погибает шериф, падает пистолет и кто-то становится героем."), false)
 AddToggle(AlertsTab, "Notify_Holders", "Notify Weapon Holders",
-    Msg("Announces when someone's knife or gun becomes visible.",
-        "Avisa cuando el cuchillo o el arma de alguien se hace visible.",
-        "Сообщает, когда нож или пистолет игрока становится виден."), false)
+    Msg("Announces when someone's knife or gun becomes visible.", "Avisa cuando el cuchillo o el arma de alguien se hace visible.", "Сообщает, когда нож или пистолет игрока становится виден."), false)
 AddToggle(AlertsTab, "Notify_Target", "Notify Assassin Target",
-    Msg("Announces your target in Assassin mode and every time it changes.",
-        "Avisa tu objetivo en modo Assassin y cada vez que cambia.",
-        "Сообщает вашу цель в режиме Assassin и каждый раз, когда она меняется."), false)
+    Msg("Announces your target in Assassin mode and every time it changes.", "Avisa tu objetivo en modo Assassin y cada vez que cambia.", "Сообщает вашу цель в режиме Assassin и каждый раз, когда она меняется."), false)
+AlertsTab:Section({ Title = "Proximity" })
+AddToggle(AlertsTab, "Alert_Prox", "Murderer Proximity Alert",
+    Msg("Warns you when the murderer gets closer than the distance below.", "Te avisa cuando el asesino se acerca más que la distancia de abajo.", "Предупреждает, когда убийца ближе заданного расстояния."), false)
+AddSlider(AlertsTab, "ProxDist", "Alert Distance", "", 10, 100, 35)
+AlertsTab:Section({ Title = "Info" })
+AddToggle(AlertsTab, "Info_Roles", "Show Roles in Info",
+    Msg("Shows the murderer and sheriff names in the Info tab.", "Muestra los nombres del asesino y el sheriff en la pestaña Info.", "Показывает имена убийцы и шерифа во вкладке Инфо."), false)
 
 ----------------------------------------------------
--- PLAYER TAB (camara)
+-- PLAYER TAB
 ----------------------------------------------------
+PlayerTab:Section({ Title = "Movement" })
+AddToggle(PlayerTab, "SpeedOn", "Speed Hack",
+    Msg("Uses the speed set below. High values may be flagged.", "Usa la velocidad de abajo. Valores altos pueden ser detectados.", "Использует скорость ниже. Большие значения могут заметить."), false)
+AddSlider(PlayerTab, "SpeedVal", "Speed Value", "", 16, 120, 30)
+AddToggle(PlayerTab, "JumpOn", "Jump Boost", "", false)
+AddSlider(PlayerTab, "JumpVal", "Jump Value", "", 50, 250, 80)
+AddToggle(PlayerTab, "InfJump", "Infinite Jump",
+    Msg("Jump again while in the air.", "Salta de nuevo en el aire.", "Прыжок в воздухе."), false)
+AddToggle(PlayerTab, "Noclip", "Noclip",
+    Msg("Walk through walls.", "Atraviesa paredes.", "Проход сквозь стены."), false)
+AddToggle(PlayerTab, "Fly", "Fly",
+    Msg("Fly where the camera looks. Use the joystick or WASD; Space goes up, Shift goes down.",
+        "Vuela hacia donde mira la cámara. Usa el joystick o WASD; Espacio sube, Shift baja.",
+        "Полёт в сторону камеры. Джойстик или WASD; пробел — вверх, Shift — вниз."), false)
+AddSlider(PlayerTab, "FlySpeed", "Fly Speed", "", 10, 150, 50)
+
 PlayerTab:Section({ Title = "Camera" })
 AddToggle(PlayerTab, "UnlockCam", "Unlock Camera",
-    Msg("Removes the forced first-person lock some modes apply.",
-        "Quita el bloqueo forzado de primera persona que ponen algunos modos.",
-        "Убирает принудительную блокировку от первого лица в некоторых режимах."),
+    Msg("Removes the forced first-person lock some modes apply.", "Quita el bloqueo forzado de primera persona que ponen algunos modos.", "Убирает принудительную блокировку от первого лица в некоторых режимах."),
     false, function(v)
         if v and LocalPlayer.CameraMode == Enum.CameraMode.LockFirstPerson then
             LocalPlayer.CameraMode = Enum.CameraMode.Classic
@@ -999,6 +2020,16 @@ AddToggle(PlayerTab, "FovOn", "Custom FOV",
     end)
 AddSlider(PlayerTab, "FovVal", "FOV", "", 40, 120, 70)
 
+PlayerTab:Section({ Title = "Character" })
+PlayerTab:Button({
+    Title = "Reset Character",
+    Desc = Msg("Kills your character so you respawn.", "Mata a tu personaje para reaparecer.", "Убивает персонажа, чтобы возродиться."),
+    Callback = function()
+        local hum = myHum()
+        if hum then hum.Health = 0 end
+    end,
+})
+
 ----------------------------------------------------
 -- COMBAT TAB
 ----------------------------------------------------
@@ -1010,9 +2041,107 @@ CombatTab:Button({
         "Достаёт нож или пистолет из рюкзака, а если он уже в руках — убирает. Есть также клавиша и плавающая кнопка (вкладка Бинды)."),
     Callback = function() EquipToggle() end,
 })
+CombatTab:Section({ Title = "Gun" })
+CombatTab:Button({
+    Title = "Grab Gun",
+    Desc = Msg("Picks up the dropped gun and returns you to your spot.", "Recoge el arma caída y te devuelve a tu sitio.", "Подбирает упавший пистолет и возвращает вас на место."),
+    Callback = function() GrabGun() end,
+})
+AddToggle(CombatTab, "AutoGrab", "Auto Grab Gun",
+    Msg("Grabs the gun by itself when it drops (never as the murderer).", "Recoge el arma sola cuando cae (nunca como asesino).", "Сам подбирает пистолет, когда он падает (но не за убийцу)."), false)
+AddSlider(CombatTab, "GrabSafe", "Safe Distance",
+    Msg("Skips the gun if the murderer is closer than this to it. 0 = never skip.", "No va por el arma si el asesino está más cerca que esto. 0 = nunca omitir.", "Не берёт пистолет, если убийца ближе этого расстояния. 0 = не пропускать."), 0, 80, 25)
 
 ----------------------------------------------------
--- MISC TAB: Weapon Index
+-- FARM TAB
+----------------------------------------------------
+FarmTab:Section({ Title = "Auto Farm" })
+AddToggle(FarmTab, "AutoFarm", "Auto Farm Coins",
+    Msg("Collects the coins of the map one by one. Noclip is applied while it runs.", "Recoge las monedas del mapa una por una. Se aplica noclip mientras funciona.", "Собирает монеты карты по одной. Во время работы включается noclip."), false)
+AddDropdown(FarmTab, "FarmMode", "Farm Mode",
+    Msg("Tween moves smoothly (safer); Teleport jumps from coin to coin.", "Tween se mueve suave (más seguro); Teleport salta de moneda en moneda.", "Tween движется плавно (безопаснее); Teleport прыгает от монеты к монете."),
+    { "Tween", "Teleport" }, "Tween")
+AddSlider(FarmTab, "FarmSpeed", "Farm Speed", Msg("Studs per second in Tween mode.", "Studs por segundo en modo Tween.", "Стады в секунду в режиме Tween."), 10, 80, 26)
+AddSlider(FarmTab, "FarmDelay", "Teleport Delay", Msg("Hundredths of a second between jumps in Teleport mode.", "Centésimas de segundo entre saltos en modo Teleport.", "Сотые доли секунды между прыжками в режиме Teleport."), 5, 100, 20)
+AddSlider(FarmTab, "FarmY", "Height Offset", Msg("Vertical offset from the coin.", "Desplazamiento vertical respecto a la moneda.", "Смещение по вертикали относительно монеты."), -3, 3, 0)
+AddToggle(FarmTab, "FarmReset", "Reset When No Coins",
+    Msg("Resets your character when there are no more coins to collect.", "Reinicia tu personaje cuando ya no quedan monedas por recoger.", "Перезапускает персонажа, когда монет больше нет."), false)
+local farmPara = FarmTab:Paragraph({ Title = "Farm Status", Desc = "-" })
+task.spawn(function()
+    while alive do
+        pcall(function()
+            farmPara:SetDesc(string.format(Msg("Status: %s\nCollected: %d", "Estado: %s\nRecogidas: %d", "Состояние: %s\nСобрано: %d"), tostring(Farm.status), Farm.collected))
+        end)
+        task.wait(0.5)
+    end
+end)
+
+----------------------------------------------------
+-- TELEPORTS TAB
+----------------------------------------------------
+TeleportsTab:Section({ Title = "Quick Teleports" })
+TeleportsTab:Button({ Title = "Teleport to Lobby", Callback = tpLobby })
+TeleportsTab:Button({ Title = "Teleport to Map", Desc = Msg("Goes to the nearest coin, or to the middle of the map.", "Va a la moneda más cercana, o al centro del mapa.", "Идёт к ближайшей монете или в центр карты."), Callback = tpMap })
+TeleportsTab:Button({ Title = "Teleport to Gun", Callback = function()
+    local p = gunPart()
+    if p then tpCF(p.CFrame + Vector3.new(0, 3, 0)) else Say(Msg("There is no gun on the ground", "No hay arma en el suelo", "На земле нет пистолета")) end
+end })
+TeleportsTab:Button({ Title = "Teleport to Murderer", Callback = function() tpRole(RS.Murderer) end })
+TeleportsTab:Button({ Title = "Teleport to Sheriff", Callback = function() tpRole(RS.Sheriff) end })
+
+TeleportsTab:Section({ Title = "Players" })
+local tpTarget = nil
+local function playerNames()
+    local names = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then names[#names + 1] = p.Name end
+    end
+    table.sort(names)
+    if #names == 0 then names = { "-" } end
+    return names
+end
+local tpDD = TeleportsTab:Dropdown({
+    Title = "Select Player", Values = playerNames(), Value = "-",
+    Callback = function(v) tpTarget = v end,
+})
+local function refreshTpList()
+    local names = playerNames()
+    if not pcall(function() tpDD:Refresh(names) end) then pcall(function() tpDD:SetValues(names) end) end
+end
+table.insert(Conns, Players.PlayerAdded:Connect(function() task.delay(0.5, refreshTpList) end))
+table.insert(Conns, Players.PlayerRemoving:Connect(function() task.delay(0.5, refreshTpList) end))
+TeleportsTab:Button({ Title = "Teleport to Player", Callback = function()
+    local plr = tpTarget and Players:FindFirstChild(tpTarget)
+    if not (plr and tpToPlayer(plr)) then
+        Say(Msg("Select a player first", "Primero elige un jugador", "Сначала выберите игрока"))
+    end
+end })
+TeleportsTab:Button({ Title = "Refresh Players", Callback = refreshTpList })
+
+----------------------------------------------------
+-- MISC TAB
+----------------------------------------------------
+MiscTab:Section({ Title = "View & Performance" })
+AddToggle(MiscTab, "Fullbright", "Fullbright",
+    Msg("Makes the whole map bright.", "Ilumina todo el mapa.", "Делает всю карту яркой."), false)
+AddSlider(MiscTab, "FBLevel", "Brightness", "", 1, 6, 2)
+AddToggle(MiscTab, "NoFog", "No Fog", "", false)
+AddToggle(MiscTab, "Xray", "X-Ray",
+    Msg("Makes the map walls transparent.", "Vuelve transparentes las paredes del mapa.", "Делает стены карты прозрачными."), false)
+AddSlider(MiscTab, "XrayVal", "X-Ray Transparency", "", 10, 90, 60)
+AddToggle(MiscTab, "AntiLag", "Anti Lag",
+    Msg("Disables particles and lowers the render quality. Textures stay as they are.", "Desactiva partículas y baja la calidad de render. Las texturas se quedan igual.", "Отключает частицы и снижает качество рендера. Текстуры остаются."), false)
+AddToggle(MiscTab, "AntiAFK", "Anti AFK",
+    Msg("Prevents the idle kick.", "Evita que te expulsen por inactividad.", "Не даёт кикнуть за бездействие."), false)
+
+MiscTab:Section({ Title = "Server" })
+MiscTab:Button({ Title = "Rejoin", Callback = function()
+    pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
+end })
+MiscTab:Button({ Title = "Server Hop", Desc = Msg("Joins another public server. Needs HTTP support.", "Entra a otro servidor público. Necesita soporte HTTP.", "Заходит на другой публичный сервер. Нужна поддержка HTTP."), Callback = serverHop })
+
+----------------------------------------------------
+-- Weapon Index
 ----------------------------------------------------
 local RARITIES = { "Common", "Uncommon", "Rare", "Legendary", "Godly", "Ancient", "Unique", "Classic", "Christmas", "Halloween" }
 local IdxType, IdxRarity = "Knife", "Godly"
@@ -1067,24 +2196,20 @@ idxInfo = MiscTab:Paragraph({
     Title = "Weapon Index",
     Desc = Msg("Loading weapon data...", "Cargando datos de armas...", "Загрузка данных об оружии..."),
 })
-MiscTab:Dropdown({
-    Title = "Weapon Type", Values = { "Knife", "Gun", "Misc" }, Value = "Knife",
-    Callback = function(v) IdxType = v refreshIndex() end,
-})
-MiscTab:Dropdown({
-    Title = "Rarity", Values = RARITIES, Value = "Godly",
-    Callback = function(v) IdxRarity = v refreshIndex() end,
-})
-idxDD = MiscTab:Dropdown({
-    Title = "Select Weapon", Values = { "-" }, Value = "-",
-    Callback = function(v) showWeapon(v) end,
-})
+MiscTab:Dropdown({ Title = "Weapon Type", Values = { "Knife", "Gun", "Misc" }, Value = "Knife",
+    Callback = function(v) IdxType = v refreshIndex() end })
+MiscTab:Dropdown({ Title = "Rarity", Values = RARITIES, Value = "Godly",
+    Callback = function(v) IdxRarity = v refreshIndex() end })
+idxDD = MiscTab:Dropdown({ Title = "Select Weapon", Values = { "-" }, Value = "-",
+    Callback = function(v) showWeapon(v) end })
 task.spawn(function()
     local t0 = os.clock()
     while alive and not WeaponDB and os.clock() - t0 < 30 do task.wait(0.5) end
     if WeaponDB then refreshIndex()
     else setIdxInfo("Weapon Index", Msg("Could not load weapon data.", "No se pudieron cargar los datos de armas.", "Не удалось загрузить данные об оружии.")) end
 end)
+
+end)()
 
 
 ----------------------------------------------------
@@ -1094,15 +2219,17 @@ MainTab:Section({ Title = "What's New" })
 MainTab:Paragraph({
     Title = "Sahur Hub " .. VERSION,
     Desc = Msg(
-        "+ Farm: coin autofarm (Tween / Teleport), avoid Murderer, auto reset when the bag is full\n+ Combat: Kill All, Kill Aura, throw knife, Shoot Murderer, Auto Shoot, Aim Lock, Grab Gun / Auto Grab\n+ Visuals: innocent, gun drop and coin ESP, tracers\n+ Player: speed, jump, infinite jump, noclip, fly, anti void, fullbright, no fog\n+ Teleports: players, spectate, Murderer / Sheriff, lobby, map, safe spot, gun drop\n+ Alerts: gun dropped, Murderer proximity, alert sound, instant roles\n+ Misc: anti AFK, FPS boost, status HUD, rejoin, server hop\n+ Fun: spin, Click TP tool, gravity, time of day\n+ New keys and floating buttons for mobile",
-        "+ Farmeo: autofarmeo de monedas (Tween / Teleport), evitar al Asesino, reinicio automático con la bolsa llena\n+ Combate: Kill All, Kill Aura, lanzar cuchillo, Disparar al Asesino, Disparo Auto, Aim Lock, Agarrar Arma / Auto\n+ Visuales: ESP de inocentes, arma caída y monedas, tracers\n+ Jugador: velocidad, salto, salto infinito, noclip, vuelo, anti vacío, brillo total, sin niebla\n+ Teletransportes: jugadores, espectar, Asesino / Sheriff, lobby, mapa, lugar seguro, arma caída\n+ Alertas: arma caída, cercanía del Asesino, sonido, roles instantáneos\n+ Misc: anti AFK, más FPS, HUD de estado, reentrar, cambiar de servidor\n+ Diversión: giro, herramienta Click TP, gravedad, hora del día\n+ Teclas nuevas y botones flotantes para móvil"),
+        "+ Base UI for Murder Mystery 2\n+ Info, Keybinds and Configs tabs ready\n+ Configs: save, load, rename, duplicate, delete, auto-load, load scope\n+ Share codes: portable and online short codes\n+ Languages: English, Español, Русский\n+ Floating Hub button for mobile\n+ Empty MM2 tabs prepared for the next features",
+        "+ UI base para Murder Mystery 2\n+ Pestañas Info, Teclas y Configs listas\n+ Configs: guardar, cargar, renombrar, duplicar, borrar, auto-carga, alcance de carga\n+ Códigos para compartir: portables y cortos online\n+ Idiomas: English, Español, Русский\n+ Botón flotante del Hub para móvil\n+ Pestañas vacías de MM2 preparadas para las próximas funciones",
+        "+ Базовый интерфейс для Murder Mystery 2\n+ Готовы вкладки Инфо, Бинды и Конфиги\n+ Конфиги: сохранение, загрузка, переименование, дублирование, удаление, автозагрузка, область загрузки\n+ Коды для обмена: обычные и короткие онлайн\n+ Языки: English, Español, Русский\n+ Плавающая кнопка хаба для телефона\n+ Пустые вкладки MM2 для будущих функций"),
 })
 MainTab:Section({ Title = "Features" })
 MainTab:Paragraph({
     Title = "Murder Mystery 2",
     Desc = Msg(
-        "Farm: coin autofarm with safety options.\nCombat: murderer, sheriff and gun-drop tools.\nVisuals: role ESP (once the weapon is visible), innocents, gun drop, coins and tracers.\nPlayer: movement, fly, noclip, camera and lighting.\nTeleports: players, roles, lobby, map and safe spot.\nAlerts: round, weapon, gun drop and proximity notifications.\nMisc: weapon index, anti AFK, FPS boost, HUD and server tools.\nFun: client-side extras.",
-        "Farmeo: autofarmeo de monedas con opciones de seguridad.\nCombate: herramientas de asesino, sheriff y arma caída.\nVisuales: ESP de roles (cuando el arma es visible), inocentes, arma caída, monedas y tracers.\nJugador: movimiento, vuelo, noclip, cámara e iluminación.\nTeletransportes: jugadores, roles, lobby, mapa y lugar seguro.\nAlertas: avisos de ronda, arma, arma caída y cercanía.\nMisc: índice de armas, anti AFK, más FPS, HUD y herramientas de servidor.\nDiversión: extras solo del lado del cliente."),
+        "Visuals: role ESP (murderer, sheriff, hero, innocents), gun and coin ESP, 5 color palettes + custom, chams, box, tags, health bars and tracers.\nAlerts: roles reveal, round, gun and murderer proximity alerts.\nPlayer: speed, jump, fly, noclip, camera.\nCombat: equip weapon, grab gun (manual and auto).\nFarm: auto coin farm.\nTeleports: lobby, map, gun and players.\nMisc: fullbright, no fog, X-ray, anti lag, anti AFK, rejoin, server hop, weapon index.\nFun: coming soon.",
+        "Visuales: ESP de roles (asesino, sheriff, héroe, inocentes), ESP de arma y monedas, 5 paletas + personalizada, chams, caja, etiquetas, barras de vida y tracers.\nAlertas: revelación de roles, ronda, arma y proximidad del asesino.\nJugador: velocidad, salto, vuelo, noclip, cámara.\nCombate: equipar arma, recoger arma (manual y auto).\nFarmeo: auto farmeo de monedas.\nTeletransportes: lobby, mapa, arma y jugadores.\nMisc: fullbright, sin niebla, rayos X, anti lag, anti AFK, reconectar, cambiar de servidor, índice de armas.\nDiversión: próximamente.",
+        "Визуал: ESP ролей (убийца, шериф, герой, невиновные), ESP пистолета и монет, 5 палитр + своя, чамсы, рамка, метки, полосы здоровья и трейсеры.\nОповещения: раскрытие ролей, раунд, пистолет и близость убийцы.\nИгрок: скорость, прыжок, полёт, noclip, камера.\nБой: достать оружие, подобрать пистолет (вручную и авто).\nФарм: автосбор монет.\nТелепорты: лобби, карта, пистолет и игроки.\nРазное: fullbright, без тумана, рентген, anti lag, anti AFK, перезайти, сменить сервер, индекс оружия.\nВеселье: скоро."),
 })
 
 ----------------------------------------------------
@@ -1154,6 +2281,11 @@ task.spawn(function()
                 "Режим: %s\nРоль: %s\nЖив: %s\nЦель: %s\nНож: %s\nПистолет: %s"),
             tostring(RS.Mode or "-"), RS.Role and tRole(RS.Role) or "-", al == nil and "-" or tostring(al),
             tostring(RS.Target or "-"), kn, gn)
+        if Ex.Info_Roles and RS.Murderer then
+            rtxt = rtxt .. "\n" .. Msg("Murderer: ", "Asesino: ", "Убийца: ") .. tostring(RS.Murderer)
+                .. "\n" .. Msg("Sheriff: ", "Sheriff: ", "Шериф: ") .. tostring(RS.Sheriff or "-")
+                .. (RS.Hero and ("\n" .. Msg("Hero: ", "Héroe: ", "Герой: ") .. tostring(RS.Hero)) or "")
+        end
         pcall(function() roundPara:SetDesc(rtxt) end)
         if FX.UpdateButtons then pcall(FX.UpdateButtons) end
     end
@@ -1176,9 +2308,9 @@ InfoTab:Paragraph({
 InfoTab:Paragraph({
     Title = "Good to know",
     Desc = Msg(
-        "On mobile, the floating buttons can be shown or hidden from the Keybinds tab.\nConfigs save every option of every tab; Load Scope lets you apply only one tab's options.",
-        "En móvil, los botones flotantes se muestran u ocultan desde la pestaña Teclas.\nLas configs guardan todas las opciones de todas las pestañas; el Alcance de Carga permite aplicar solo las de una pestaña.",
-        "На телефоне плавающие кнопки можно показать или скрыть во вкладке Бинды.\nКонфиги сохраняют все опции всех вкладок; область загрузки позволяет применить только одну вкладку."),
+        "Tabs marked 'Coming soon' have no features yet.\nOn mobile, the floating buttons can be shown or hidden from the Keybinds tab.\nConfigs save every option of every tab; Load Scope lets you apply only one tab's options.",
+        "Las pestañas con 'Próximamente' todavía no tienen funciones.\nEn móvil, los botones flotantes se muestran u ocultan desde la pestaña Teclas.\nLas configs guardan todas las opciones de todas las pestañas; el Alcance de Carga permite aplicar solo las de una pestaña.",
+        "Вкладки с пометкой 'Скоро' пока без функций.\nНа телефоне плавающие кнопки можно показать или скрыть во вкладке Бинды.\nКонфиги сохраняют все опции всех вкладок; область загрузки позволяет применить только одну вкладку."),
 })
 print("[SAHUR] Info tab loaded")
 
@@ -1217,11 +2349,11 @@ end))
 
 -- Botones flotantes (se pueden arrastrar). Para anadir mas: Floating[#Floating+1] via MakeFloat.
 local Floating = {}
-local function MakeFloat(text, y, onTap, getOn, flag, x)
+local function MakeFloat(text, y, onTap, getOn, flag)
     local b = Instance.new("TextButton")
     b.Name = "SahurHub_Float_" .. text
     b.Size = UDim2.fromOffset(46, 46)
-    b.Position = UDim2.new(1, x or -66, 0.5, y)
+    b.Position = UDim2.new(1, -66, 0.5, y)
     b.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     b.BackgroundTransparency = 0.2
     b.AutoButtonColor = false
@@ -1270,6 +2402,8 @@ end
 
 MakeFloat("HUB", -70, function() FX.ToggleHub() end, function() return FX.HubOpen end, "BtnHub")
 MakeFloat("EQP", -15, EquipToggle, HoldingWeapon, "BtnEquip")
+MakeFloat("GUN", 40, function() GrabGun() end, function() return false end, "BtnGun")
+MakeFloat("FLY", 95, function() FlipFlag("Fly") end, function() return Ex.Fly and true or false end, "BtnFly")
 
 print("[SAHUR] Loading Keybinds Tab")
 ----------------------------------------------------
@@ -1286,6 +2420,18 @@ AddKeybind(KeybindsTab, "Key_Equip", "Equip / Unequip Weapon",
         "Equipa tu cuchillo o arma, o la guarda (por defecto: Q).",
         "Достаёт нож или пистолет, или убирает (по умолчанию: Q)."),
     "Q", function() EquipToggle() end)
+AddKeybind(KeybindsTab, "Key_Fly", "Toggle Fly",
+    Msg("Turns flying on or off (default: F).", "Activa o desactiva el vuelo (por defecto: F).", "Включает или выключает полёт (по умолчанию: F)."),
+    "F", function() FlipFlag("Fly") end)
+AddKeybind(KeybindsTab, "Key_Noclip", "Toggle Noclip",
+    Msg("Turns noclip on or off (default: N).", "Activa o desactiva el noclip (por defecto: N).", "Включает или выключает noclip (по умолчанию: N)."),
+    "N", function() FlipFlag("Noclip") end)
+AddKeybind(KeybindsTab, "Key_Grab", "Grab Gun",
+    Msg("Picks up the dropped gun (default: G).", "Recoge el arma caída (por defecto: G).", "Подбирает упавший пистолет (по умолчанию: G)."),
+    "G", function() GrabGun() end)
+AddKeybind(KeybindsTab, "Key_Farm", "Toggle Auto Farm",
+    Msg("Turns the coin farm on or off (default: H).", "Activa o desactiva el farmeo de monedas (por defecto: H).", "Включает или выключает автосбор монет (по умолчанию: H)."),
+    "H", function() FlipFlag("AutoFarm") end)
 -- Para anadir mas teclas: AddKeybind(KeybindsTab, "Key_Algo", "Titulo", "Descripcion", "Z", function() ... end)
 
 KeybindsTab:Section({ Title = "Mobile Buttons" })
@@ -1304,1656 +2450,15 @@ AddToggle(KeybindsTab, "BtnEquip", "Equip Weapon Button",
         "Botón flotante que equipa o guarda tu arma.",
         "Плавающая кнопка, которая достаёт или убирает оружие."),
     false, function() FX.UpdateButtons() end)
+AddToggle(KeybindsTab, "BtnGun", "Grab Gun Button",
+    Msg("Floating button that picks up the dropped gun.", "Botón flotante que recoge el arma caída.", "Плавающая кнопка, которая подбирает упавший пистолет."),
+    false, function() FX.UpdateButtons() end)
+AddToggle(KeybindsTab, "BtnFly", "Fly Button",
+    Msg("Floating button that turns flying on or off.", "Botón flotante que activa o desactiva el vuelo.", "Плавающая кнопка, включающая и выключающая полёт."),
+    false, function() FX.UpdateButtons() end)
 
 FX.UpdateButtons()
 print("[SAHUR] Keybinds tab loaded")
-
-----------------------------------------------------
--- SAHUR 2.0 | CORE HELPERS (shared by every module)
-----------------------------------------------------
-print("[SAHUR] Loading Core Helpers")
-;(function()
-local H = {}
-FX.H = H
-
--- Spanish titles for the new options (English is the default language)
-local ES = {
-    ["Movement"] = "Movimiento", ["Speed Boost"] = "Aumento de Velocidad", ["Speed Method"] = "Método de Velocidad",
-    ["Speed"] = "Velocidad", ["Enable Jump Power"] = "Activar Poder de Salto", ["Jump Power"] = "Poder de Salto",
-    ["Infinite Jump"] = "Salto Infinito", ["Fly"] = "Volar", ["Fly Speed"] = "Velocidad de Vuelo",
-    ["Anti Void"] = "Anti Vacío", ["Character"] = "Personaje", ["Reset Character"] = "Reiniciar Personaje",
-    ["Lighting"] = "Iluminación", ["Fullbright"] = "Brillo Total", ["Fullbright Level"] = "Nivel de Brillo",
-    ["Remove Fog"] = "Quitar Niebla",
-    ["Kill All"] = "Matar a Todos", ["Kill Targets"] = "Objetivos del Kill All", ["Return After Kill All"] = "Volver tras Kill All",
-    ["Kill Aura"] = "Kill Aura", ["Kill Aura Range"] = "Rango del Kill Aura", ["Throw Knife at Nearest"] = "Lanzar Cuchillo al Más Cercano",
-    ["Sheriff / Hero"] = "Sheriff / Héroe", ["Shoot Murderer"] = "Disparar al Asesino", ["Auto Shoot"] = "Disparo Automático",
-    ["Auto Shoot Range"] = "Rango del Disparo Auto", ["Require Line of Sight"] = "Requerir Línea de Visión",
-    ["Predict Movement"] = "Predecir Movimiento", ["Aim Lock"] = "Fijar Mira al Asesino", ["Aim Smoothness"] = "Suavidad de la Mira",
-    ["Gun Drop"] = "Arma Caída", ["Grab Gun"] = "Agarrar Arma", ["Auto Grab Gun"] = "Agarrar Arma Automático",
-    ["Auto Farm"] = "Autofarmeo", ["Farm Status"] = "Estado del Farmeo", ["Auto Farm Coins"] = "Autofarmeo de Monedas",
-    ["Farm Method"] = "Método de Farmeo", ["Farm Speed"] = "Velocidad de Farmeo", ["Delay Between Coins (ms)"] = "Retraso entre Monedas (ms)",
-    ["Safety"] = "Seguridad", ["Avoid Murderer"] = "Evitar al Asesino", ["Avoid Distance"] = "Distancia a Evitar",
-    ["Reset When Bag Is Full"] = "Reiniciar con Bolsa Llena", ["Coin Cap (fallback)"] = "Límite de Monedas (respaldo)",
-    ["Reset Session Counter"] = "Reiniciar Contador de Sesión",
-    ["Players"] = "Jugadores", ["Select Player"] = "Elegir Jugador", ["Teleport To Player"] = "Ir al Jugador",
-    ["Spectate Selected Player"] = "Espectar al Jugador", ["Refresh Player List"] = "Actualizar Lista de Jugadores",
-    ["Roles"] = "Roles", ["Teleport To Murderer"] = "Ir al Asesino", ["Teleport To Sheriff"] = "Ir al Sheriff",
-    ["Places"] = "Lugares", ["Teleport To Lobby"] = "Ir al Lobby", ["Teleport To Map"] = "Ir al Mapa",
-    ["Teleport To Safe Spot"] = "Ir al Lugar Seguro", ["Teleport To Gun Drop"] = "Ir al Arma Caída",
-    ["Extra ESP"] = "ESP Extra", ["Innocent ESP"] = "ESP de Inocentes", ["Gun Drop ESP"] = "ESP del Arma Caída",
-    ["Coin ESP"] = "ESP de Monedas", ["Tracers"] = "Líneas (Tracers)", ["Tracer Thickness"] = "Grosor de Líneas",
-    ["Extra Alerts"] = "Alertas Extra", ["Notify Gun Dropped"] = "Avisar Arma Caída",
-    ["Murderer Proximity Alert"] = "Alerta de Cercanía del Asesino", ["Proximity Distance"] = "Distancia de Alerta",
-    ["Alert Sound"] = "Sonido de Alerta", ["Alert Volume (%)"] = "Volumen de Alerta (%)",
-    ["Instant Roles (experimental)"] = "Roles Instantáneos (experimental)", ["Role Data"] = "Datos de Roles",
-    ["Utilities"] = "Utilidades", ["Anti AFK"] = "Anti AFK", ["FPS Boost"] = "Más FPS", ["Status HUD"] = "HUD de Estado",
-    ["Server"] = "Servidor", ["Rejoin"] = "Reentrar", ["Server Hop (Random)"] = "Cambiar Servidor (Aleatorio)",
-    ["Server Hop (Low Population)"] = "Cambiar Servidor (Pocos Jugadores)", ["Copy Server ID"] = "Copiar ID del Servidor",
-    ["Client Effects"] = "Efectos del Cliente", ["Spin"] = "Girar", ["Spin Speed"] = "Velocidad de Giro",
-    ["Click TP Tool"] = "Herramienta Click TP", ["Custom Gravity"] = "Gravedad Personalizada", ["Gravity"] = "Gravedad",
-    ["Custom Time of Day"] = "Hora del Día Personalizada", ["Time of Day"] = "Hora del Día",
-    ["Movement Keys"] = "Teclas de Movimiento", ["Combat Keys"] = "Teclas de Combate", ["Farm Keys"] = "Teclas de Farmeo",
-    ["More Floating Buttons"] = "Más Botones Flotantes", ["Toggle Fly"] = "Activar/Desactivar Vuelo",
-    ["Toggle Noclip"] = "Activar/Desactivar Noclip", ["Toggle Speed"] = "Activar/Desactivar Velocidad",
-    ["Toggle Auto Farm"] = "Activar/Desactivar Autofarmeo", ["Fly Button"] = "Botón de Vuelo", ["Speed Button"] = "Botón de Velocidad",
-    ["Farm Button"] = "Botón de Farmeo", ["Kill Button"] = "Botón de Kill All", ["Shoot Button"] = "Botón de Disparo",
-    ["Grab Button"] = "Botón de Agarrar Arma",
-}
-for k, v in pairs(ES) do
-    if I18N.es then I18N.es[k] = v end
-end
-
-function H.Note(text, dur) NotifyUI("Sahur Hub", text, dur or 3) end
-
--- Alert sound (built-in Roblox sound, no downloads)
-local beepSound
-function FX.Beep()
-    if not beepSound or not beepSound.Parent then
-        beepSound = Instance.new("Sound")
-        beepSound.Name = "SahurBeep"
-        beepSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
-        beepSound.Parent = Gui
-    end
-    beepSound.Volume = (tonumber(Ex.Alert_Volume) or 50) / 100 * 2
-    beepSound:Play()
-end
-
-function H.Root(char)
-    char = char or LocalPlayer.Character
-    return char and char:FindFirstChild("HumanoidRootPart") or nil
-end
-
-function H.Hum(char)
-    char = char or LocalPlayer.Character
-    return char and char:FindFirstChildOfClass("Humanoid") or nil
-end
-
-function H.IsAlive(plr)
-    local char = plr.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not hum or hum.Health <= 0 then return false end
-    if plr:GetAttribute("Alive") == false then return false end
-    return true
-end
-
-function H.Targets()
-    local out = {}
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and H.IsAlive(p) and H.Root(p.Character) then out[#out + 1] = p end
-    end
-    return out
-end
-
-function H.Nearest(list)
-    local root = H.Root()
-    if not root then return nil end
-    local best, bd = nil, math.huge
-    for _, p in ipairs(list or H.Targets()) do
-        local r = H.Root(p.Character)
-        if r then
-            local d = (r.Position - root.Position).Magnitude
-            if d < bd then best, bd = p, d end
-        end
-    end
-    return best, bd
-end
-
--- Finds the knife / gun tool in the character or the backpack
-function H.GetTool(kind)
-    local tag = kind == "Knife" and "Weapon_Knife" or "Weapon_Gun"
-    local conts = {}
-    if LocalPlayer.Character then conts[#conts + 1] = LocalPlayer.Character end
-    local bp = LocalPlayer:FindFirstChildOfClass("Backpack")
-    if bp then conts[#conts + 1] = bp end
-    for _, cont in ipairs(conts) do
-        for _, t in ipairs(cont:GetChildren()) do
-            if t:IsA("Tool") and (t:HasTag(tag) or t.Name == kind) then return t end
-        end
-    end
-    return nil
-end
-
-function H.Holding(kind)
-    local tool = H.GetTool(kind)
-    return tool ~= nil and tool.Parent == LocalPlayer.Character, tool
-end
-
-function H.MyRole()
-    if H.GetTool("Knife") then return "Murderer" end
-    if H.GetTool("Gun") then return "Sheriff" end
-    return RS.Role
-end
-
--- Known murderer / sheriff (revealed by their weapon or by role data)
-function H.RolePlayer(role)
-    for uid, r in pairs(RS.Seen) do
-        if r == role then
-            local p = Players:GetPlayerByUserId(uid)
-            if p and p ~= LocalPlayer and H.IsAlive(p) then return p end
-        end
-    end
-    return nil
-end
-
-function H.Toggle(id)
-    local v = not Ex[id]
-    if Setters[id] then Setters[id](v) else Ex[id] = v end
-    pcall(FX.UpdateButtons)
-end
-
-function H.GetMap(loose)
-    for _, c in ipairs(workspace:GetChildren()) do
-        if c:IsA("Model") and c.Name ~= "Lobby" then
-            if c:FindFirstChild("CoinContainer") then return c end
-            if loose and c:FindFirstChild("Spawns") then return c end
-        end
-    end
-    return nil
-end
-
-function H.FindGunDrop()
-    local d = workspace:FindFirstChild("GunDrop")
-    if d then return d end
-    local m = H.GetMap(true)
-    return m and m:FindFirstChild("GunDrop") or nil
-end
-
-function H.PartOf(inst)
-    if not inst then return nil end
-    if inst:IsA("BasePart") then return inst end
-    return inst:FindFirstChildWhichIsA("BasePart", true)
-end
-
-function H.TP(cf)
-    local r = H.Root()
-    if not r then return false end
-    r.AssemblyLinearVelocity = Vector3.zero
-    r.CFrame = cf
-    return true
-end
-
-function H.Clip(text)
-    local f = setclipboard or toclipboard or set_clipboard or (Clipboard and Clipboard.set)
-    if not f then return false end
-    return (pcall(f, text))
-end
-
-FX.Cleanups = FX.Cleanups or {}
-function H.OnCleanup(f) FX.Cleanups[#FX.Cleanups + 1] = f end
-end)()
-
-----------------------------------------------------
--- PLAYER TAB: movement, fly, noclip, lighting
-----------------------------------------------------
-print("[SAHUR] Loading Player Module")
-;(function()
-local H = FX.H
-local Lighting = game:GetService("Lighting")
-local UIS = UserInputService
-local st = {}
-
-PlayerTab:Section({ Title = "Movement" })
-AddToggle(PlayerTab, "Speed", "Speed Boost",
-    Msg("Run faster. Keep it moderate to look natural.", "Corre más rápido. Mantenlo moderado para verte natural."), false)
-AddDropdown(PlayerTab, "SpeedMethod", "Speed Method",
-    Msg("WalkSpeed edits the property. CFrame moves you manually (harder to notice).",
-        "WalkSpeed cambia la propiedad. CFrame te mueve manualmente (más difícil de notar)."),
-    { "WalkSpeed", "CFrame" }, "WalkSpeed")
-AddSlider(PlayerTab, "SpeedVal", "Speed", "", 16, 150, 32)
-AddToggle(PlayerTab, "JumpOn", "Enable Jump Power",
-    Msg("Uses the jump power set below.", "Usa el poder de salto definido abajo."), false)
-AddSlider(PlayerTab, "JumpVal", "Jump Power", "", 50, 250, 50)
-AddToggle(PlayerTab, "InfJump", "Infinite Jump",
-    Msg("Jump again in mid-air.", "Salta de nuevo en el aire."), false)
-AddToggle(PlayerTab, "Noclip", "Noclip",
-    Msg("Walk through walls and objects.", "Atraviesa paredes y objetos."), false)
-AddToggle(PlayerTab, "Fly", "Fly",
-    Msg("Fly where the camera looks. Works on PC and mobile (joystick). Space / Ctrl = up / down on PC.",
-        "Vuela hacia donde mira la cámara. Funciona en PC y móvil (joystick). Espacio / Ctrl = subir / bajar en PC."), false)
-AddSlider(PlayerTab, "FlySpeed", "Fly Speed", "", 10, 150, 50)
-AddToggle(PlayerTab, "AntiVoid", "Anti Void",
-    Msg("If you fall into the void, you are sent back to the last safe position.",
-        "Si caes al vacío, vuelves a la última posición segura."), false)
-
-PlayerTab:Section({ Title = "Character" })
-PlayerTab:Button({
-    Title = "Reset Character",
-    Desc = Msg("Kills your character so it respawns.", "Mata a tu personaje para que reaparezca."),
-    Callback = function() local h = H.Hum() if h then h.Health = 0 end end,
-})
-
-PlayerTab:Section({ Title = "Lighting" })
-AddToggle(PlayerTab, "Fullbright", "Fullbright",
-    Msg("Removes darkness from the map.", "Quita la oscuridad del mapa."), false)
-AddSlider(PlayerTab, "FBLevel", "Fullbright Level", "", 60, 255, 200)
-AddToggle(PlayerTab, "NoFog", "Remove Fog",
-    Msg("Removes fog and atmosphere haze.", "Quita la niebla y la bruma."), false)
-
--- Camera-relative movement vector from the game's own controls (works with joystick)
-local controls
-task.spawn(function()
-    local ok, c = pcall(function()
-        local ps = LocalPlayer:WaitForChild("PlayerScripts", 10)
-        local pm = ps and ps:WaitForChild("PlayerModule", 10)
-        return pm and require(pm):GetControls()
-    end)
-    if ok and c then controls = c end
-end)
-
-local function flyDir(hum)
-    local cam = workspace.CurrentCamera
-    if not cam then return Vector3.zero end
-    local dir = Vector3.zero
-    local mv
-    if controls then
-        local ok, v = pcall(function() return controls:GetMoveVector() end)
-        if ok then mv = v end
-    end
-    if mv then
-        dir = cam.CFrame.RightVector * mv.X + cam.CFrame.LookVector * (-mv.Z)
-    else
-        local md = hum.MoveDirection
-        if md.Magnitude > 0 then
-            local look = cam.CFrame.LookVector
-            local flat = Vector3.new(look.X, 0, look.Z)
-            local f = flat.Magnitude > 0 and md:Dot(flat.Unit) or 0
-            dir = md + Vector3.new(0, look.Y * math.max(f, 0), 0)
-        end
-    end
-    if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
-    if UIS:IsKeyDown(Enum.KeyCode.LeftControl) or UIS:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0, 1, 0) end
-    if dir.Magnitude > 1 then dir = dir.Unit end
-    return dir
-end
-
-local function stopFly()
-    if st.bv then pcall(function() st.bv:Destroy() end) st.bv = nil end
-    local hum = st.flyHum
-    if hum and hum.Parent then pcall(function() hum.PlatformStand = false end) end
-    st.flyHum = nil
-end
-
-table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
-    local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not hum or not root then return end
-
-    -- Speed
-    if Ex.Speed then
-        local target = tonumber(Ex.SpeedVal) or 32
-        if Ex.SpeedMethod == "CFrame" then
-            if st.ws then hum.WalkSpeed = st.ws st.ws = nil end
-            local md = hum.MoveDirection
-            if md.Magnitude > 0 and not Ex.Fly then
-                local extra = math.max(target - hum.WalkSpeed, 0)
-                root.CFrame = root.CFrame + md * extra * dt
-            end
-        else
-            if not st.ws then st.ws = hum.WalkSpeed end
-            hum.WalkSpeed = target
-        end
-    elseif st.ws then
-        hum.WalkSpeed = st.ws
-        st.ws = nil
-    end
-
-    -- Jump power
-    if Ex.JumpOn then
-        if not st.jp then st.jp = { hum.UseJumpPower, hum.JumpPower } end
-        hum.UseJumpPower = true
-        hum.JumpPower = tonumber(Ex.JumpVal) or 50
-    elseif st.jp then
-        hum.UseJumpPower = st.jp[1]
-        hum.JumpPower = st.jp[2]
-        st.jp = nil
-    end
-
-    -- Fly
-    if Ex.Fly then
-        if st.bv and st.bv.Parent ~= root then st.bv = nil end
-        if not st.bv then
-            local bv = Instance.new("BodyVelocity")
-            bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-            bv.Velocity = Vector3.zero
-            bv.Parent = root
-            st.bv = bv
-        end
-        if st.flyHum ~= hum then
-            st.flyHum = hum
-            hum.PlatformStand = true
-        end
-        st.bv.Velocity = flyDir(hum) * (tonumber(Ex.FlySpeed) or 50)
-    elseif st.bv then
-        stopFly()
-    end
-
-    -- Anti void
-    if Ex.AntiVoid then
-        local limit = workspace.FallenPartsDestroyHeight + 60
-        if root.Position.Y < limit and st.safe then
-            root.AssemblyLinearVelocity = Vector3.zero
-            root.CFrame = st.safe + Vector3.new(0, 6, 0)
-        elseif hum.FloorMaterial ~= Enum.Material.Air and root.Position.Y > limit + 40 then
-            st.safe = root.CFrame
-        end
-    end
-end))
-
--- Noclip (also forced on by the farm while it moves)
-table.insert(Conns, RunService.Stepped:Connect(function()
-    if not (Ex.Noclip or FX.NoclipForce) then return end
-    local char = LocalPlayer.Character
-    if not char then return end
-    for _, p in ipairs(char:GetDescendants()) do
-        if p:IsA("BasePart") and p.CanCollide then p.CanCollide = false end
-    end
-end))
-
-table.insert(Conns, UIS.JumpRequest:Connect(function()
-    if not Ex.InfJump then return end
-    local hum = H.Hum()
-    if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
-end))
-
--- Lighting (re-applied every frame because the game may reset it)
-table.insert(Conns, RunService.RenderStepped:Connect(function()
-    if Ex.Fullbright then
-        if not st.fb then st.fb = { Lighting.Brightness, Lighting.Ambient, Lighting.OutdoorAmbient } end
-        local v = tonumber(Ex.FBLevel) or 200
-        Lighting.Brightness = 2
-        Lighting.Ambient = Color3.fromRGB(v, v, v)
-        Lighting.OutdoorAmbient = Color3.fromRGB(v, v, v)
-    elseif st.fb then
-        Lighting.Brightness, Lighting.Ambient, Lighting.OutdoorAmbient = st.fb[1], st.fb[2], st.fb[3]
-        st.fb = nil
-    end
-
-    if Ex.NoFog then
-        if not st.fog then
-            st.fog = { Lighting.FogStart, Lighting.FogEnd, {} }
-            for _, a in ipairs(Lighting:GetChildren()) do
-                if a:IsA("Atmosphere") then st.fog[3][a] = a.Density end
-            end
-        end
-        Lighting.FogEnd = 1e6
-        Lighting.FogStart = 1e6 - 1
-        for a in pairs(st.fog[3]) do
-            if a.Parent then a.Density = 0 end
-        end
-    elseif st.fog then
-        Lighting.FogStart, Lighting.FogEnd = st.fog[1], st.fog[2]
-        for a, d in pairs(st.fog[3]) do
-            if a.Parent then a.Density = d end
-        end
-        st.fog = nil
-    end
-end))
-
-H.OnCleanup(function()
-    stopFly()
-    local hum = H.Hum()
-    if hum and st.ws then hum.WalkSpeed = st.ws end
-    if hum and st.jp then hum.UseJumpPower = st.jp[1] hum.JumpPower = st.jp[2] end
-    if st.fb then Lighting.Brightness, Lighting.Ambient, Lighting.OutdoorAmbient = st.fb[1], st.fb[2], st.fb[3] end
-    if st.fog then
-        Lighting.FogStart, Lighting.FogEnd = st.fog[1], st.fog[2]
-        for a, d in pairs(st.fog[3]) do if a.Parent then a.Density = d end end
-    end
-    FX.NoclipForce = false
-end)
-end)()
-
-----------------------------------------------------
--- COMBAT TAB: murderer, sheriff and gun tools
-----------------------------------------------------
-print("[SAHUR] Loading Combat Module")
-;(function()
-local H = FX.H
-
-local function isMurderer() return H.MyRole() == "Murderer" end
-
-local function equipTool(tool)
-    local hum = H.Hum()
-    if tool and hum and tool.Parent ~= LocalPlayer.Character then
-        pcall(function() hum:EquipTool(tool) end)
-        task.wait(0.06)
-    end
-end
-
--- ===== Murderer =====
-local function stab(target)
-    local knife = H.GetTool("Knife")
-    local troot = target.Character and H.Root(target.Character)
-    if not knife or not troot then return false end
-    equipTool(knife)
-    pcall(function() knife:Activate() end)
-    local sr = knife:FindFirstChild("Stab")
-    if sr and sr:IsA("RemoteEvent") then pcall(function() sr:FireServer("Slash") end) end
-    local handle = knife:FindFirstChild("Handle")
-    if handle and type(firetouchinterest) == "function" then
-        pcall(firetouchinterest, handle, troot, 0)
-        pcall(firetouchinterest, handle, troot, 1)
-    end
-    return true
-end
-
-local function killList()
-    local mode = Ex.Kill_Target
-    if mode == "Sheriff" then
-        local sh = H.RolePlayer("Sheriff")
-        return sh and { sh } or {}
-    elseif mode == "Nearest" then
-        local n = H.Nearest()
-        return n and { n } or {}
-    end
-    return H.Targets()
-end
-
-local killing = false
-local function KillAll()
-    if killing then return end
-    if not isMurderer() then
-        H.Note(Msg("You are not the Murderer.", "No eres el Asesino."))
-        return
-    end
-    if not H.GetTool("Knife") then return end
-    killing = true
-    local root = H.Root()
-    local origin = root and root.CFrame
-    for _, p in ipairs(killList()) do
-        if not alive then break end
-        local t0 = os.clock()
-        while alive and H.IsAlive(p) and os.clock() - t0 < 1.3 do
-            local r = H.Root()
-            local tr = p.Character and H.Root(p.Character)
-            if not r or not tr then break end
-            local behind = (tr.CFrame * CFrame.new(0, 0, 2.2)).Position
-            r.AssemblyLinearVelocity = Vector3.zero
-            r.CFrame = CFrame.lookAt(behind, tr.Position)
-            stab(p)
-            task.wait(0.1)
-        end
-    end
-    if origin and Ex.Kill_Return ~= false and H.Root() then H.TP(origin) end
-    killing = false
-end
-H.KillAll = function() task.spawn(KillAll) end
-
-local function throwKnife()
-    if not isMurderer() then
-        H.Note(Msg("You are not the Murderer.", "No eres el Asesino."))
-        return
-    end
-    local knife = H.GetTool("Knife")
-    local root = H.Root()
-    local target = H.Nearest()
-    local tr = target and H.Root(target.Character)
-    if not knife or not root or not tr then return end
-    equipTool(knife)
-    local v = tr.AssemblyLinearVelocity
-    local pos = tr.Position + Vector3.new(v.X, 0, v.Z) * 0.15
-    local a, b = CFrame.new(root.Position), CFrame.new(pos)
-    local ev = knife:FindFirstChild("Events")
-    local kt = ev and ev:FindFirstChild("KnifeThrown")
-    if kt and kt:IsA("RemoteEvent") then pcall(function() kt:FireServer(a, b) end) end
-    local th = knife:FindFirstChild("Throw")
-    if th and th:IsA("RemoteEvent") then pcall(function() th:FireServer(a, b) end) end
-end
-
-CombatTab:Section({ Title = "Murderer" })
-CombatTab:Button({
-    Title = "Kill All",
-    Desc = Msg("Teleports behind each target and stabs them (Murderer only). Also a key and a floating button.",
-        "Se teletransporta detrás de cada objetivo y lo apuñala (solo Asesino). También como tecla y botón flotante."),
-    Callback = function() task.spawn(KillAll) end,
-})
-AddDropdown(CombatTab, "Kill_Target", "Kill Targets",
-    Msg("Who Kill All goes after.", "A quién ataca el Kill All."), { "Everyone", "Sheriff", "Nearest" }, "Everyone")
-AddToggle(CombatTab, "Kill_Return", "Return After Kill All",
-    Msg("Goes back to where you were when the kills are done.", "Vuelve a donde estabas cuando termina."), true)
-AddToggle(CombatTab, "KillAura", "Kill Aura",
-    Msg("Automatically stabs anyone close to you (Murderer only).", "Apuñala automáticamente a quien esté cerca (solo Asesino)."), false)
-AddSlider(CombatTab, "KillAuraRange", "Kill Aura Range", "", 5, 30, 12)
-CombatTab:Button({
-    Title = "Throw Knife at Nearest",
-    Desc = Msg("Throws the knife at the closest player.", "Lanza el cuchillo al jugador más cercano."),
-    Callback = function() task.spawn(throwKnife) end,
-})
-
-task.spawn(function()
-    while alive do
-        task.wait(0.15)
-        if Ex.KillAura and not killing and isMurderer() and H.IsAlive(LocalPlayer) then
-            local root = H.Root()
-            if root then
-                local range = tonumber(Ex.KillAuraRange) or 12
-                for _, p in ipairs(H.Targets()) do
-                    local tr = H.Root(p.Character)
-                    if tr and (tr.Position - root.Position).Magnitude <= range then stab(p) end
-                end
-            end
-        end
-    end
-end)
-
--- ===== Sheriff / Hero =====
-local lastShot = 0
-local function shootAt(pos)
-    local gun = H.GetTool("Gun")
-    if not gun then return false end
-    equipTool(gun)
-    local kl = gun:FindFirstChild("KnifeLocal")
-    local cb = kl and kl:FindFirstChild("CreateBeam")
-    local rf = cb and cb:FindFirstChild("RemoteFunction")
-    if rf and rf:IsA("RemoteFunction") then
-        local ok = pcall(function() rf:InvokeServer(1, pos, "AH2") end)
-        if ok then return true end
-    end
-    for _, d in ipairs(gun:GetDescendants()) do
-        if d:IsA("RemoteFunction") then
-            local ok = pcall(function() d:InvokeServer(1, pos, "AH2") end)
-            if ok then return true end
-        end
-    end
-    return false
-end
-
-local function aimPos(p, fromPos)
-    local tr = p.Character and H.Root(p.Character)
-    if not tr then return nil end
-    if not Ex.Shoot_Predict then return tr.Position end
-    local v = tr.AssemblyLinearVelocity
-    local t = (tr.Position - fromPos).Magnitude / 140
-    return tr.Position + Vector3.new(v.X, 0, v.Z) * t
-end
-
-local function ShootMurderer(silent)
-    if os.clock() - lastShot < 0.7 then return end
-    if not H.GetTool("Gun") then
-        if not silent then H.Note(Msg("You don't have the gun.", "No tienes el arma.")) end
-        return
-    end
-    local m = H.RolePlayer("Murderer")
-    if not m then
-        if not silent then H.Note(Msg("The Murderer has not been revealed yet.", "El Asesino aún no ha sido revelado.")) end
-        return
-    end
-    local root = H.Root()
-    local pos = aimPos(m, root and root.Position or Vector3.zero)
-    if not pos then return end
-    lastShot = os.clock()
-    task.spawn(shootAt, pos)
-end
-H.ShootMurderer = function() ShootMurderer(false) end
-
-local function hasLOS(root, mr)
-    local rp = RaycastParams.new()
-    rp.FilterType = Enum.RaycastFilterType.Exclude
-    rp.FilterDescendantsInstances = { LocalPlayer.Character }
-    local res = workspace:Raycast(root.Position, mr.Position - root.Position, rp)
-    return res == nil or res.Instance:IsDescendantOf(mr.Parent)
-end
-
-CombatTab:Section({ Title = "Sheriff / Hero" })
-CombatTab:Button({
-    Title = "Shoot Murderer",
-    Desc = Msg("Shoots the revealed Murderer from anywhere, no aiming needed. Also a key and a floating button.",
-        "Dispara al Asesino revelado desde donde estés, sin apuntar. También como tecla y botón flotante."),
-    Callback = function() ShootMurderer(false) end,
-})
-AddToggle(CombatTab, "AutoShoot", "Auto Shoot",
-    Msg("Shoots the Murderer automatically when you hold the gun and they are in range.",
-        "Dispara al Asesino automáticamente cuando tienes el arma y está en rango."), false)
-AddSlider(CombatTab, "AutoShootRange", "Auto Shoot Range", "", 20, 300, 100)
-AddToggle(CombatTab, "AutoShootLOS", "Require Line of Sight",
-    Msg("Only auto-shoots when nothing is between you and the Murderer.", "Solo dispara si no hay nada entre tú y el Asesino."), true)
-AddToggle(CombatTab, "Shoot_Predict", "Predict Movement",
-    Msg("Leads the shot based on the Murderer's speed.", "Adelanta el disparo según la velocidad del Asesino."), true)
-AddToggle(CombatTab, "AimLock", "Aim Lock",
-    Msg("While you hold the gun, the camera follows the Murderer.", "Mientras tengas el arma, la cámara sigue al Asesino."), false)
-AddSlider(CombatTab, "AimSmooth", "Aim Smoothness", Msg("Lower = smoother.", "Menor = más suave."), 5, 100, 35)
-
-task.spawn(function()
-    while alive do
-        task.wait(0.1)
-        if Ex.AutoShoot and H.Holding("Gun") and H.IsAlive(LocalPlayer) then
-            local m = H.RolePlayer("Murderer")
-            local root = H.Root()
-            local mr = m and m.Character and H.Root(m.Character)
-            if root and mr and (mr.Position - root.Position).Magnitude <= (tonumber(Ex.AutoShootRange) or 100) then
-                if not Ex.AutoShootLOS or hasLOS(root, mr) then ShootMurderer(true) end
-            end
-        end
-    end
-end)
-
-table.insert(Conns, RunService.RenderStepped:Connect(function()
-    if not Ex.AimLock or not H.Holding("Gun") then return end
-    local m = H.RolePlayer("Murderer")
-    local head = m and m.Character and (m.Character:FindFirstChild("Head") or H.Root(m.Character))
-    local cam = workspace.CurrentCamera
-    if not head or not cam then return end
-    local a = math.clamp((tonumber(Ex.AimSmooth) or 35) / 100, 0.05, 1)
-    cam.CFrame = cam.CFrame:Lerp(CFrame.lookAt(cam.CFrame.Position, head.Position), a)
-end))
-
--- ===== Gun drop =====
-local grabbing = false
-local function GrabGun(silent)
-    if grabbing then return end
-    local drop = H.FindGunDrop()
-    if not drop then
-        if not silent then H.Note(Msg("There is no gun on the ground.", "No hay un arma en el suelo.")) end
-        return
-    end
-    local part = H.PartOf(drop)
-    local root = H.Root()
-    if not part or not root then return end
-    grabbing = true
-    local old = root.CFrame
-    for _ = 1, 4 do
-        if not drop.Parent or not H.Root() then break end
-        H.Root().CFrame = part.CFrame + Vector3.new(0, 1.5, 0)
-        if type(firetouchinterest) == "function" then
-            pcall(firetouchinterest, H.Root(), part, 0)
-            pcall(firetouchinterest, H.Root(), part, 1)
-        end
-        task.wait(0.15)
-    end
-    local r2 = H.Root()
-    if r2 then
-        r2.AssemblyLinearVelocity = Vector3.zero
-        r2.CFrame = old
-    end
-    grabbing = false
-end
-H.GrabGun = function() task.spawn(GrabGun, false) end
-
-CombatTab:Section({ Title = "Gun Drop" })
-CombatTab:Button({
-    Title = "Grab Gun",
-    Desc = Msg("Teleports to the dropped gun, picks it up and brings you back. Also a key and a floating button.",
-        "Va al arma caída, la recoge y te devuelve. También como tecla y botón flotante."),
-    Callback = function() task.spawn(GrabGun, false) end,
-})
-AddToggle(CombatTab, "AutoGrab", "Auto Grab Gun",
-    Msg("Grabs the gun as soon as it drops (not for the Murderer).", "Agarra el arma apenas cae (no para el Asesino)."), false)
-
-task.spawn(function()
-    local lastTry = 0
-    while alive do
-        task.wait(0.25)
-        if Ex.AutoGrab and os.clock() - lastTry > 2.5 and H.FindGunDrop() and H.IsAlive(LocalPlayer) and not isMurderer() then
-            lastTry = os.clock()
-            GrabGun(true)
-        end
-    end
-end)
-end)()
-
-----------------------------------------------------
--- FARM TAB: coin autofarm
-----------------------------------------------------
-print("[SAHUR] Loading Farm Module")
-;(function()
-local H = FX.H
-local TweenService = game:GetService("TweenService")
-
-local FS = {
-    session = 0, round = 0, state = "Off",
-    visited = setmetatable({}, { __mode = "k" }),
-    paused = nil, roundSeen = nil, map = nil, moving = false,
-}
-FX.FarmState = FS
-
-FarmTab:Section({ Title = "Auto Farm" })
-local farmPara = FarmTab:Paragraph({
-    Title = "Farm Status",
-    Desc = Msg("Auto farm is off.", "El autofarmeo está apagado."),
-})
-AddToggle(FarmTab, "Farm_Coins", "Auto Farm Coins",
-    Msg("Collects every coin of the round by itself. Resets when the bag is full to bank the coins. Also a key and a floating button.",
-        "Recoge todas las monedas de la ronda solo. Se reinicia cuando la bolsa está llena para guardar las monedas. También como tecla y botón flotante."),
-    false)
-AddDropdown(FarmTab, "Farm_Method", "Farm Method",
-    Msg("Tween glides to each coin (safer). Teleport jumps to each coin (faster, riskier).",
-        "Tween se desliza a cada moneda (más seguro). Teleport salta a cada moneda (más rápido, más riesgoso)."),
-    { "Tween", "Teleport" }, "Tween")
-AddSlider(FarmTab, "Farm_Speed", "Farm Speed",
-    Msg("Studs per second in Tween mode. Higher is faster but looks less natural.",
-        "Studs por segundo en modo Tween. Más alto es más rápido pero menos natural."), 10, 80, 28)
-AddSlider(FarmTab, "Farm_Delay", "Delay Between Coins (ms)", "", 0, 500, 80)
-
-FarmTab:Section({ Title = "Safety" })
-AddToggle(FarmTab, "Farm_Avoid", "Avoid Murderer",
-    Msg("Skips coins close to the revealed Murderer (when you are not the Murderer).",
-        "Salta las monedas cercanas al Asesino revelado (cuando no eres el Asesino)."), true)
-AddSlider(FarmTab, "Farm_AvoidDist", "Avoid Distance", "", 10, 80, 30)
-AddToggle(FarmTab, "Farm_ResetFull", "Reset When Bag Is Full",
-    Msg("Resets your character when the coin bag is full so the coins are saved, then waits for the next round.",
-        "Reinicia tu personaje cuando la bolsa está llena para guardar las monedas y espera la siguiente ronda."), true)
-AddSlider(FarmTab, "Farm_Cap", "Coin Cap (fallback)",
-    Msg("Only used if the game's own 'bag full' indicator cannot be read.",
-        "Solo se usa si no se puede leer el indicador de 'bolsa llena' del juego."), 10, 60, 40)
-FarmTab:Button({
-    Title = "Reset Session Counter",
-    Callback = function() FS.session = 0 FS.round = 0 end,
-})
-
-local function bagFull()
-    local ok, res = pcall(function()
-        local pg = LocalPlayer:FindFirstChild("PlayerGui")
-        local main = pg and pg:FindFirstChild("MainGUI")
-        local game_ = main and main:FindFirstChild("Game")
-        local bag = game_ and game_:FindFirstChild("CashBag")
-        if not bag then return nil end
-        local full = bag:FindFirstChild("Full")
-        if full and full:IsA("GuiObject") then return full.Visible end
-        return nil
-    end)
-    if ok then return res end
-    return nil
-end
-
-local function inRound()
-    return RS.Active or LocalPlayer:GetAttribute("Alive") == true
-end
-
-local function farmOn() return alive and Ex.Farm_Coins end
-
-local function nearestCoin(map, root)
-    local cc = map and map:FindFirstChild("CoinContainer")
-    if not cc then return nil end
-    local mpos
-    if Ex.Farm_Avoid and H.MyRole() ~= "Murderer" then
-        local m = H.RolePlayer("Murderer")
-        local mr = m and m.Character and H.Root(m.Character)
-        mpos = mr and mr.Position
-    end
-    local avoid = tonumber(Ex.Farm_AvoidDist) or 30
-    local best, bestPart, bd = nil, nil, math.huge
-    for _, c in ipairs(cc:GetChildren()) do
-        if not FS.visited[c] then
-            local p = H.PartOf(c)
-            if p then
-                local d = (p.Position - root.Position).Magnitude
-                if d < bd and not (mpos and (p.Position - mpos).Magnitude < avoid) then
-                    best, bestPart, bd = c, p, d
-                end
-            end
-        end
-    end
-    return best, bestPart
-end
-
-local function moveTo(root, pos)
-    if Ex.Farm_Method == "Teleport" then
-        root.CFrame = CFrame.new(pos) * root.CFrame.Rotation
-        return
-    end
-    local speed = math.max(tonumber(Ex.Farm_Speed) or 28, 5)
-    local dist = (root.Position - pos).Magnitude
-    local t = math.max(dist / speed, 0.03)
-    local tw = TweenService:Create(root, TweenInfo.new(t, Enum.EasingStyle.Linear), { CFrame = CFrame.new(pos) * root.CFrame.Rotation })
-    tw:Play()
-    local t0 = os.clock()
-    while farmOn() and os.clock() - t0 < t + 0.5 and tw.PlaybackState == Enum.PlaybackState.Playing do
-        task.wait()
-    end
-    pcall(function() tw:Cancel() end)
-end
-
-local function resetCharacter()
-    local old = LocalPlayer.Character
-    local hum = H.Hum()
-    if hum then hum.Health = 0 end
-    local t0 = os.clock()
-    while alive and os.clock() - t0 < 12 do
-        task.wait(0.3)
-        local c = LocalPlayer.Character
-        if c and c ~= old and c:FindFirstChild("HumanoidRootPart") then break end
-    end
-end
-
-local function idle(state)
-    FS.state = state
-    FS.moving = false
-    FX.NoclipForce = false
-end
-
-local function farmStep()
-    local root, hum = H.Root(), H.Hum()
-    if not root or not hum or hum.Health <= 0 then idle("Waiting for character") return end
-    if FS.paused and FS.paused == RS.Seen then idle("Coins banked - waiting for next round") return end
-    FS.paused = nil
-    if not inRound() then idle("Waiting for a round") return end
-    local map = H.GetMap()
-    if not map then idle("Waiting for the map") return end
-
-    -- new round or new map: forget visited coins
-    if FS.roundSeen ~= RS.Seen or FS.map ~= map then
-        FS.roundSeen = RS.Seen
-        FS.map = map
-        FS.visited = setmetatable({}, { __mode = "k" })
-        FS.round = 0
-    end
-
-    local full = bagFull()
-    if full == nil then full = FS.round >= (tonumber(Ex.Farm_Cap) or 40) end
-    if full then
-        idle("Bag full")
-        if Ex.Farm_ResetFull then
-            FS.state = "Bag full - resetting"
-            FS.paused = RS.Seen
-            resetCharacter()
-        else
-            task.wait(0.5)
-        end
-        return
-    end
-
-    local coin, part = nearestCoin(map, root)
-    if not coin then idle("No coins left") task.wait(0.3) return end
-
-    FS.state = "Collecting coins"
-    FS.moving = true
-    FX.NoclipForce = true
-    moveTo(root, part.Position)
-    if not farmOn() then return end
-    local r2 = H.Root()
-    if r2 and part.Parent and type(firetouchinterest) == "function" then
-        pcall(firetouchinterest, r2, part, 0)
-        pcall(firetouchinterest, r2, part, 1)
-    end
-    FS.visited[coin] = true
-    if coin.Parent then
-        FS.round = FS.round + 1
-        FS.session = FS.session + 1
-    end
-    local d = (tonumber(Ex.Farm_Delay) or 80) / 1000
-    if d > 0 then task.wait(d) end
-end
-
--- keep velocity at zero while moving so gravity does not drag the character
-table.insert(Conns, RunService.Heartbeat:Connect(function()
-    if FS.moving and Ex.Farm_Coins then
-        local r = H.Root()
-        if r then
-            r.AssemblyLinearVelocity = Vector3.zero
-            r.AssemblyAngularVelocity = Vector3.zero
-        end
-    end
-end))
-
-task.spawn(function()
-    while alive do
-        task.wait(0.1)
-        if Ex.Farm_Coins then
-            local ok, err = pcall(farmStep)
-            if not ok then
-                warn("[SAHUR] Farm error: " .. tostring(err))
-                task.wait(1)
-            end
-        else
-            if FS.moving or FS.state ~= "Off" then idle("Off") end
-        end
-    end
-end)
-
-task.spawn(function()
-    while alive do
-        task.wait(0.5)
-        local txt = string.format(
-            Msg("State: %s\nCoins this round: %d\nCoins this session: %d",
-                "Estado: %s\nMonedas esta ronda: %d\nMonedas esta sesión: %d"),
-            FS.state, FS.round, FS.session)
-        pcall(function() farmPara:SetDesc(txt) end)
-    end
-end)
-
-H.OnCleanup(function()
-    FS.moving = false
-    FX.NoclipForce = false
-end)
-end)()
-
-----------------------------------------------------
--- TELEPORTS TAB
-----------------------------------------------------
-print("[SAHUR] Loading Teleports Module")
-;(function()
-local H = FX.H
-local selected = nil
-local playerDD
-local safePart
-
-local function nameList()
-    local t = {}
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then t[#t + 1] = p.Name end
-    end
-    table.sort(t)
-    if #t == 0 then t = { "-" } end
-    return t
-end
-
-local function selectedPlayer()
-    return selected and Players:FindFirstChild(selected) or nil
-end
-
-local function tpToPlayer(p)
-    local tr = p and p.Character and H.Root(p.Character)
-    if not tr then
-        H.Note(Msg("That player has no character right now.", "Ese jugador no tiene personaje ahora."))
-        return
-    end
-    H.TP(tr.CFrame + Vector3.new(0, 3, 0))
-end
-
-TeleportsTab:Section({ Title = "Players" })
-local initial = nameList()
-selected = initial[1] ~= "-" and initial[1] or nil
-playerDD = TeleportsTab:Dropdown({
-    Title = "Select Player", Values = initial, Value = initial[1],
-    Callback = function(v) selected = v ~= "-" and v or nil end,
-})
-local function refreshList()
-    local list = nameList()
-    if not pcall(function() playerDD:Refresh(list) end) then pcall(function() playerDD:SetValues(list) end) end
-    if not selected or not Players:FindFirstChild(selected) then selected = list[1] ~= "-" and list[1] or nil end
-end
-table.insert(Conns, Players.PlayerAdded:Connect(function() task.delay(0.5, refreshList) end))
-table.insert(Conns, Players.PlayerRemoving:Connect(function() task.delay(0.5, refreshList) end))
-TeleportsTab:Button({
-    Title = "Teleport To Player",
-    Callback = function() tpToPlayer(selectedPlayer()) end,
-})
-AddToggle(TeleportsTab, "Spectate", "Spectate Selected Player",
-    Msg("Moves the camera to the selected player. Turn it off to come back.",
-        "Mueve la cámara al jugador elegido. Apágalo para volver."), false)
-TeleportsTab:Button({ Title = "Refresh Player List", Callback = refreshList })
-
-TeleportsTab:Section({ Title = "Roles" })
-TeleportsTab:Button({
-    Title = "Teleport To Murderer",
-    Desc = Msg("Works once the Murderer's knife has been seen.", "Funciona una vez que se vio el cuchillo del Asesino."),
-    Callback = function()
-        local m = H.RolePlayer("Murderer")
-        if m then tpToPlayer(m) else H.Note(Msg("The Murderer has not been revealed yet.", "El Asesino aún no ha sido revelado.")) end
-    end,
-})
-TeleportsTab:Button({
-    Title = "Teleport To Sheriff",
-    Desc = Msg("Works once the gun has been seen.", "Funciona una vez que se vio el arma."),
-    Callback = function()
-        local s = H.RolePlayer("Sheriff")
-        if s then tpToPlayer(s) else H.Note(Msg("The Sheriff has not been revealed yet.", "El Sheriff aún no ha sido revelado.")) end
-    end,
-})
-
-TeleportsTab:Section({ Title = "Places" })
-TeleportsTab:Button({
-    Title = "Teleport To Lobby",
-    Callback = function()
-        local lobby = workspace:FindFirstChild("Lobby")
-        local spawns = lobby and lobby:FindFirstChild("Spawns")
-        local list = spawns and spawns:GetChildren() or {}
-        local part
-        if #list > 0 then part = H.PartOf(list[math.random(#list)]) end
-        if not part then
-            for _, d in ipairs(workspace:GetDescendants()) do
-                if d:IsA("SpawnLocation") then part = d break end
-            end
-        end
-        if part then H.TP(part.CFrame + Vector3.new(0, 4, 0))
-        else H.Note(Msg("Lobby not found.", "No se encontró el lobby.")) end
-    end,
-})
-TeleportsTab:Button({
-    Title = "Teleport To Map",
-    Callback = function()
-        local map = H.GetMap(true)
-        if not map then H.Note(Msg("There is no map right now.", "No hay mapa ahora.")) return end
-        local spawns = map:FindFirstChild("Spawns")
-        local list = spawns and spawns:GetChildren() or {}
-        local part = #list > 0 and H.PartOf(list[math.random(#list)]) or nil
-        if part then H.TP(part.CFrame + Vector3.new(0, 4, 0))
-        else H.TP(map:GetPivot() + Vector3.new(0, 15, 0)) end
-    end,
-})
-TeleportsTab:Button({
-    Title = "Teleport To Safe Spot",
-    Desc = Msg("A platform high above the map where nobody can reach you.", "Una plataforma muy alta sobre el mapa donde nadie te alcanza."),
-    Callback = function()
-        if not safePart or not safePart.Parent then
-            safePart = Instance.new("Part")
-            safePart.Name = "SahurSafeSpot"
-            safePart.Anchored = true
-            safePart.Size = Vector3.new(80, 2, 80)
-            safePart.Position = Vector3.new(0, 5000, 0)
-            safePart.Material = Enum.Material.SmoothPlastic
-            safePart.Color = Color3.fromRGB(150, 0, 0)
-            safePart.Transparency = 0.4
-            safePart.Parent = workspace
-        end
-        H.TP(safePart.CFrame + Vector3.new(0, 4, 0))
-    end,
-})
-TeleportsTab:Button({
-    Title = "Teleport To Gun Drop",
-    Desc = Msg("Goes next to the dropped gun without picking it up (use Grab Gun for that).",
-        "Va junto al arma caída sin recogerla (usa Agarrar Arma para eso)."),
-    Callback = function()
-        local part = H.PartOf(H.FindGunDrop())
-        if part then H.TP(part.CFrame + Vector3.new(0, 4, 0))
-        else H.Note(Msg("There is no gun on the ground.", "No hay un arma en el suelo.")) end
-    end,
-})
-
--- Spectate loop
-table.insert(Conns, RunService.RenderStepped:Connect(function()
-    local cam = workspace.CurrentCamera
-    if not cam then return end
-    if Ex.Spectate then
-        local p = selectedPlayer()
-        local hum = p and p.Character and H.Hum(p.Character)
-        if hum then
-            cam.CameraSubject = hum
-            FX.Spectating = true
-        end
-    elseif FX.Spectating then
-        local own = H.Hum()
-        if own then cam.CameraSubject = own end
-        FX.Spectating = false
-    end
-end))
-
-H.OnCleanup(function()
-    if safePart then pcall(function() safePart:Destroy() end) end
-    local own, cam = H.Hum(), workspace.CurrentCamera
-    if FX.Spectating and own and cam then cam.CameraSubject = own end
-end)
-end)()
-
-----------------------------------------------------
--- VISUALS: extra ESP (innocents, gun drop, coins, tracers)
-----------------------------------------------------
-print("[SAHUR] Loading Extra Visuals")
-;(function()
-local H = FX.H
-
-VisualsTab:Section({ Title = "Extra ESP" })
-AddToggle(VisualsTab, "ESP_Innocent", "Innocent ESP",
-    Msg("Highlights every other player that has not shown a weapon (during a round).",
-        "Resalta a todos los demás jugadores que no han mostrado un arma (durante una ronda)."), false)
-AddToggle(VisualsTab, "ESP_GunDrop", "Gun Drop ESP",
-    Msg("Highlights the gun when the Sheriff dies and drops it.", "Resalta el arma cuando el Sheriff muere y la suelta."), false)
-AddToggle(VisualsTab, "ESP_Coins", "Coin ESP",
-    Msg("Marks the coins of the map that you have not collected yet.", "Marca las monedas del mapa que aún no recogiste."), false)
-AddToggle(VisualsTab, "ESP_Tracers", "Tracers",
-    Msg("Lines from the bottom of the screen to the Murderer, Sheriff and your target. Needs Drawing support in your executor.",
-        "Líneas desde abajo de la pantalla hasta el Asesino, el Sheriff y tu objetivo. Necesita soporte de Drawing en tu ejecutor."), false)
-AddSlider(VisualsTab, "ESP_TracerThick", "Tracer Thickness", "", 1, 5, 1)
-
--- Gun drop highlight
-local gunHL, gunBB
-local function clearGun()
-    if gunHL then pcall(function() gunHL:Destroy() end) gunHL = nil end
-    if gunBB then pcall(function() gunBB:Destroy() end) gunBB = nil end
-end
-
--- Coin markers
-local CoinFolder = Instance.new("Folder")
-CoinFolder.Name = "SahurCoinESP"
-CoinFolder.Parent = Gui
-local coinMarks = {}
-local function clearCoins()
-    for c, bb in pairs(coinMarks) do
-        pcall(function() bb:Destroy() end)
-        coinMarks[c] = nil
-    end
-end
-
-task.spawn(function()
-    while alive do
-        task.wait(0.35)
-        -- gun drop
-        if Ex.ESP_GunDrop then
-            local part = H.PartOf(H.FindGunDrop())
-            if part then
-                if not gunHL or not gunHL.Parent or gunHL.Adornee ~= part then
-                    clearGun()
-                    gunHL = Instance.new("Highlight")
-                    gunHL.Adornee = part
-                    gunHL.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                    gunHL.FillColor = Color3.fromRGB(255, 220, 0)
-                    gunHL.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    gunHL.FillTransparency = 0.3
-                    gunHL.Parent = Gui
-                    gunBB = Instance.new("BillboardGui")
-                    gunBB.Size = UDim2.fromOffset(120, 24)
-                    gunBB.StudsOffset = Vector3.new(0, 2.5, 0)
-                    gunBB.AlwaysOnTop = true
-                    gunBB.Adornee = part
-                    gunBB.Parent = Gui
-                    local l = Instance.new("TextLabel")
-                    l.Size = UDim2.fromScale(1, 1)
-                    l.BackgroundTransparency = 1
-                    l.Font = Enum.Font.GothamBold
-                    l.TextSize = 14
-                    l.TextColor3 = Color3.fromRGB(255, 220, 0)
-                    l.TextStrokeTransparency = 0
-                    l.Text = Msg("GUN", "ARMA")
-                    l.Parent = gunBB
-                end
-            else
-                clearGun()
-            end
-        else
-            clearGun()
-        end
-
-        -- coins
-        if Ex.ESP_Coins then
-            local map = H.GetMap()
-            local cc = map and map:FindFirstChild("CoinContainer")
-            local FS = FX.FarmState
-            if cc then
-                local seen = {}
-                local count = 0
-                for _, c in ipairs(cc:GetChildren()) do
-                    local p = H.PartOf(c)
-                    if p and not (FS and FS.visited[c]) then
-                        seen[c] = true
-                        count = count + 1
-                        if count <= 80 and not coinMarks[c] then
-                            local bb = Instance.new("BillboardGui")
-                            bb.Size = UDim2.fromOffset(10, 10)
-                            bb.AlwaysOnTop = true
-                            bb.Adornee = p
-                            bb.Parent = CoinFolder
-                            local f = Instance.new("Frame")
-                            f.Size = UDim2.fromScale(1, 1)
-                            f.BackgroundColor3 = Color3.fromRGB(255, 205, 0)
-                            f.BorderSizePixel = 0
-                            f.Parent = bb
-                            local uc = Instance.new("UICorner")
-                            uc.CornerRadius = UDim.new(1, 0)
-                            uc.Parent = f
-                            coinMarks[c] = bb
-                        end
-                    end
-                end
-                for c, bb in pairs(coinMarks) do
-                    if not seen[c] or not c.Parent then
-                        pcall(function() bb:Destroy() end)
-                        coinMarks[c] = nil
-                    end
-                end
-            else
-                clearCoins()
-            end
-        else
-            clearCoins()
-        end
-    end
-end)
-
--- Tracers (Drawing API, optional)
-local hasDrawing = pcall(function() return Drawing.new end) and Drawing ~= nil
-local lines = {}
-local function hideLines()
-    for plr, ln in pairs(lines) do
-        pcall(function() ln.Visible = false end)
-    end
-end
-local function killLines()
-    for plr, ln in pairs(lines) do
-        pcall(function() ln:Remove() end)
-        lines[plr] = nil
-    end
-end
-
-table.insert(Conns, RunService.RenderStepped:Connect(function()
-    if not hasDrawing then return end
-    if not Ex.ESP_Tracers then
-        if next(lines) then hideLines() end
-        return
-    end
-    local cam = workspace.CurrentCamera
-    if not cam then return end
-    local vp = cam.ViewportSize
-    local origin = Vector2.new(vp.X / 2, vp.Y)
-    local used = {}
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            local color
-            local role = RS.Seen[plr.UserId]
-            if role == "Murderer" and Ex.ESP_Murderer then color = ROLE_COLORS.Murderer
-            elseif role == "Sheriff" and Ex.ESP_Sheriff then color = ROLE_COLORS.Sheriff
-            elseif Ex.ESP_Target and RS.Target and plr.Name == RS.Target then color = TARGET_COLOR end
-            local root = color and plr.Character and H.Root(plr.Character)
-            if root then
-                local pos, on = cam:WorldToViewportPoint(root.Position)
-                local ln = lines[plr]
-                if not ln then
-                    ln = Drawing.new("Line")
-                    lines[plr] = ln
-                end
-                ln.Visible = on
-                ln.From = origin
-                ln.To = Vector2.new(pos.X, pos.Y)
-                ln.Color = color
-                ln.Thickness = tonumber(Ex.ESP_TracerThick) or 1
-                used[plr] = true
-            end
-        end
-    end
-    for plr, ln in pairs(lines) do
-        if not used[plr] then pcall(function() ln.Visible = false end) end
-    end
-end))
-
-H.OnCleanup(function()
-    clearGun()
-    clearCoins()
-    killLines()
-end)
-end)()
-
-----------------------------------------------------
--- ALERTS: extra notifications and role data
-----------------------------------------------------
-print("[SAHUR] Loading Extra Alerts")
-;(function()
-local H = FX.H
-
-AlertsTab:Section({ Title = "Extra Alerts" })
-AddToggle(AlertsTab, "Notify_GunDrop", "Notify Gun Dropped",
-    Msg("Announces when the Sheriff dies and the gun lands on the ground.",
-        "Avisa cuando el Sheriff muere y el arma cae al suelo."), false)
-AddToggle(AlertsTab, "Notify_Prox", "Murderer Proximity Alert",
-    Msg("Warns you when the revealed Murderer gets close (when you are not the Murderer).",
-        "Te avisa cuando el Asesino revelado se acerca (cuando no eres el Asesino)."), false)
-AddSlider(AlertsTab, "Prox_Dist", "Proximity Distance", "", 10, 100, 40)
-AddToggle(AlertsTab, "Alert_Sound", "Alert Sound",
-    Msg("Plays a short sound with every alert.", "Reproduce un sonido corto con cada alerta."), false)
-AddSlider(AlertsTab, "Alert_Volume", "Alert Volume (%)", "", 0, 100, 50)
-
-AlertsTab:Section({ Title = "Role Data" })
-AddToggle(AlertsTab, "InstantRoles", "Instant Roles (experimental)",
-    Msg("Tries to read the roles from the game as soon as the round starts. If the game blocks it, nothing happens and the weapon-based detection keeps working.",
-        "Intenta leer los roles del juego apenas empieza la ronda. Si el juego lo bloquea no pasa nada y la detección por arma sigue funcionando."),
-    false)
-
-local lastDrop, lastProx = nil, 0
-task.spawn(function()
-    while alive do
-        task.wait(0.3)
-        local drop = H.FindGunDrop()
-        if drop and drop ~= lastDrop then
-            if Ex.Notify_GunDrop then Say(Msg("The gun was dropped!", "¡El arma fue soltada!"), 4) end
-        end
-        lastDrop = drop
-
-        if Ex.Notify_Prox and RS.Active and H.MyRole() ~= "Murderer" and os.clock() - lastProx > 5 then
-            local m = H.RolePlayer("Murderer")
-            local mr = m and m.Character and H.Root(m.Character)
-            local root = H.Root()
-            if mr and root then
-                local d = (mr.Position - root.Position).Magnitude
-                if d <= (tonumber(Ex.Prox_Dist) or 40) then
-                    lastProx = os.clock()
-                    Say(string.format(Msg("Murderer is %d studs away!", "¡El Asesino está a %d studs!"), math.floor(d + 0.5)), 3)
-                end
-            end
-        end
-    end
-end)
-
--- Role data read (optional)
-local function readRoleData()
-    local rem = ReplicatedStorage:FindFirstChild("GetPlayerData", true)
-    if not rem or not rem:IsA("RemoteFunction") then return end
-    local ok, data = pcall(function() return rem:InvokeServer() end)
-    if not ok or type(data) ~= "table" then return end
-    for name, info in pairs(data) do
-        if type(info) == "table" and not info.Dead and not info.Killed then
-            local role = info.Role == "Hero" and "Sheriff" or info.Role
-            if role == "Murderer" or role == "Sheriff" then
-                local p = Players:FindFirstChild(tostring(name))
-                if p and p ~= LocalPlayer then RS.Seen[p.UserId] = role end
-            end
-        end
-    end
-end
-task.spawn(function()
-    while alive do
-        task.wait(2)
-        if Ex.InstantRoles and RS.Active then pcall(readRoleData) end
-    end
-end)
-end)()
-
-----------------------------------------------------
--- MISC: utilities, server tools and status HUD
-----------------------------------------------------
-print("[SAHUR] Loading Misc Module")
-;(function()
-local H = FX.H
-local Lighting = game:GetService("Lighting")
-local TeleportService = game:GetService("TeleportService")
-local VirtualUser = game:GetService("VirtualUser")
-
-MiscTab:Section({ Title = "Utilities" })
-AddToggle(MiscTab, "AntiAFK", "Anti AFK",
-    Msg("Stops the game from kicking you for being idle. Recommended for farming.",
-        "Evita que el juego te expulse por inactividad. Recomendado para farmear."), true)
-AddToggle(MiscTab, "FPSBoost", "FPS Boost",
-    Msg("Lowers graphics quality and disables shadows and post effects. Turn it off to restore them.",
-        "Baja la calidad gráfica y desactiva sombras y efectos. Apágalo para restaurarlos."), false)
-AddToggle(MiscTab, "HUD", "Status HUD",
-    Msg("Small overlay with your role, round time, coins and the Murderer's distance.",
-        "Pequeño panel con tu rol, tiempo de ronda, monedas y la distancia del Asesino."), false)
-
-table.insert(Conns, LocalPlayer.Idled:Connect(function()
-    if not Ex.AntiAFK then return end
-    pcall(function()
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end)
-end))
-
--- FPS boost (fully reversible: nothing is deleted)
-local fps
-local function applyFPS(on)
-    if on and not fps then
-        fps = { shadows = Lighting.GlobalShadows, effects = {} }
-        pcall(function() fps.quality = settings().Rendering.QualityLevel end)
-        Lighting.GlobalShadows = false
-        pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
-        for _, e in ipairs(Lighting:GetChildren()) do
-            if e:IsA("PostEffect") then
-                fps.effects[e] = e.Enabled
-                e.Enabled = false
-            end
-        end
-    elseif not on and fps then
-        Lighting.GlobalShadows = fps.shadows
-        if fps.quality then pcall(function() settings().Rendering.QualityLevel = fps.quality end) end
-        for e, was in pairs(fps.effects) do
-            if e.Parent then e.Enabled = was end
-        end
-        fps = nil
-    end
-end
-task.spawn(function()
-    while alive do
-        task.wait(0.7)
-        applyFPS(Ex.FPSBoost == true)
-    end
-end)
-
-MiscTab:Section({ Title = "Server" })
-MiscTab:Button({
-    Title = "Rejoin",
-    Desc = Msg("Reconnects you to this same server.", "Te reconecta a este mismo servidor."),
-    Callback = function()
-        pcall(function()
-            if #Players:GetPlayers() <= 1 then
-                TeleportService:Teleport(game.PlaceId, LocalPlayer)
-            else
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-            end
-        end)
-    end,
-})
-
-local function hop(sortOrder, shuffle)
-    H.Note(Msg("Searching for a server...", "Buscando un servidor..."))
-    task.spawn(function()
-        local url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=%s&limit=100&excludeFullGames=true",
-            game.PlaceId, sortOrder)
-        local raw = Download(url)
-        local ok, j = pcall(function() return HttpService:JSONDecode(raw or "") end)
-        local list = {}
-        if ok and type(j) == "table" and type(j.data) == "table" then
-            for _, s in ipairs(j.data) do
-                if s.id ~= game.JobId and s.playing and s.maxPlayers and s.playing < s.maxPlayers - 1 then
-                    list[#list + 1] = s
-                end
-            end
-        end
-        if #list == 0 then
-            H.Note(Msg("No server found. Try again in a moment.", "No se encontró servidor. Intenta de nuevo en un momento."), 4)
-            return
-        end
-        local pick = shuffle and list[math.random(#list)] or list[1]
-        pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, pick.id, LocalPlayer) end)
-    end)
-end
-MiscTab:Button({
-    Title = "Server Hop (Random)",
-    Callback = function() hop("Desc", true) end,
-})
-MiscTab:Button({
-    Title = "Server Hop (Low Population)",
-    Desc = Msg("Joins the emptiest server (less competition when farming).", "Entra al servidor más vacío (menos competencia al farmear)."),
-    Callback = function() hop("Asc", false) end,
-})
-MiscTab:Button({
-    Title = "Copy Server ID",
-    Callback = function()
-        if H.Clip(game.JobId) then H.Note(Msg("Server ID copied.", "ID del servidor copiado."))
-        else H.Note(Msg("Your executor cannot copy to the clipboard.", "Tu ejecutor no puede copiar al portapapeles.")) end
-    end,
-})
-
--- Status HUD
-local hud = Instance.new("TextLabel")
-hud.Name = "SahurHUD"
-hud.Size = UDim2.fromOffset(260, 84)
-hud.Position = UDim2.new(0, 12, 0, 70)
-hud.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-hud.BackgroundTransparency = 0.35
-hud.TextColor3 = Color3.new(1, 1, 1)
-hud.Font = Enum.Font.GothamMedium
-hud.TextSize = 13
-hud.TextXAlignment = Enum.TextXAlignment.Left
-hud.TextYAlignment = Enum.TextYAlignment.Top
-hud.Visible = false
-hud.ZIndex = 40
-hud.Parent = Gui
-do
-    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0, 8) c.Parent = hud
-    local p = Instance.new("UIPadding")
-    p.PaddingLeft = UDim.new(0, 8) p.PaddingTop = UDim.new(0, 6)
-    p.Parent = hud
-end
-
-local function fmtTime(s) return string.format("%d:%02d", math.floor(s / 60), math.floor(s % 60)) end
-local roundT
-task.spawn(function()
-    while alive do
-        task.wait(0.5)
-        if RS.Active and not roundT then roundT = os.clock() elseif not RS.Active then roundT = nil end
-        hud.Visible = Ex.HUD == true
-        if hud.Visible then
-            local role = H.MyRole()
-            local lines = {
-                Msg("Role: ", "Rol: ") .. (role and tRole(role) or "-") .. "  |  " .. tostring(RS.Mode or "-"),
-                Msg("Round time: ", "Tiempo de ronda: ") .. (roundT and fmtTime(os.clock() - roundT) or "-"),
-            }
-            local FS = FX.FarmState
-            if FS then
-                lines[#lines + 1] = Msg("Coins: ", "Monedas: ") .. FS.round .. " (" .. FS.session .. ")  " .. tostring(FS.state)
-            end
-            local m = H.RolePlayer("Murderer")
-            local mr = m and m.Character and H.Root(m.Character)
-            local root = H.Root()
-            if mr and root and role ~= "Murderer" then
-                lines[#lines + 1] = string.format(Msg("Murderer: %s [%d]", "Asesino: %s [%d]"), m.DisplayName, math.floor((mr.Position - root.Position).Magnitude + 0.5))
-            end
-            hud.Text = table.concat(lines, "\n")
-        end
-    end
-end)
-
-H.OnCleanup(function()
-    applyFPS(false)
-    pcall(function() hud:Destroy() end)
-end)
-end)()
-
-----------------------------------------------------
--- FUN: client-side extras
-----------------------------------------------------
-print("[SAHUR] Loading Fun Module")
-;(function()
-local H = FX.H
-local Lighting = game:GetService("Lighting")
-local st = {}
-
-FunTab:Section({ Title = "Client Effects" })
-AddToggle(FunTab, "Fun_Spin", "Spin",
-    Msg("Spins your character around.", "Hace girar a tu personaje."), false)
-AddSlider(FunTab, "Fun_SpinSpeed", "Spin Speed", "", 1, 50, 10)
-AddToggle(FunTab, "Fun_ClickTP", "Click TP Tool",
-    Msg("Gives you a 'Click TP' tool: equip it and tap anywhere to teleport there (PC and mobile).",
-        "Te da una herramienta 'Click TP': equípala y toca cualquier sitio para teletransportarte (PC y móvil)."), false)
-AddToggle(FunTab, "Fun_Gravity", "Custom Gravity",
-    Msg("Uses the gravity set below.", "Usa la gravedad definida abajo."), false)
-AddSlider(FunTab, "Fun_GravityVal", "Gravity", Msg("Default is 196.", "Por defecto es 196."), 10, 300, 100)
-AddToggle(FunTab, "Fun_Time", "Custom Time of Day",
-    Msg("Forces the time of day (visual only).", "Fuerza la hora del día (solo visual)."), false)
-AddSlider(FunTab, "Fun_TimeVal", "Time of Day", "", 0, 24, 12)
-
--- Click TP tool
-local ctp
-local function removeTool()
-    if ctp then pcall(function() ctp:Destroy() end) ctp = nil end
-end
-local function giveTool()
-    local bp = LocalPlayer:FindFirstChildOfClass("Backpack")
-    if not bp then return end
-    if ctp and ctp.Parent then return end
-    ctp = Instance.new("Tool")
-    ctp.Name = "Click TP"
-    ctp.RequiresHandle = false
-    ctp.CanBeDropped = false
-    ctp.Activated:Connect(function()
-        local hit = LocalPlayer:GetMouse().Hit
-        local r = H.Root()
-        if r and hit then
-            r.AssemblyLinearVelocity = Vector3.zero
-            r.CFrame = CFrame.new(hit.Position + Vector3.new(0, 3, 0))
-        end
-    end)
-    ctp.Parent = bp
-end
-task.spawn(function()
-    while alive do
-        task.wait(1)
-        if Ex.Fun_ClickTP then giveTool() else removeTool() end
-    end
-end)
-
-table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
-    if Ex.Fun_Spin then
-        local r = H.Root()
-        if r then r.CFrame = r.CFrame * CFrame.Angles(0, math.rad((tonumber(Ex.Fun_SpinSpeed) or 10) * dt * 60), 0) end
-    end
-end))
-
-table.insert(Conns, RunService.RenderStepped:Connect(function()
-    if Ex.Fun_Gravity then
-        if not st.grav then st.grav = workspace.Gravity end
-        workspace.Gravity = tonumber(Ex.Fun_GravityVal) or 100
-    elseif st.grav then
-        workspace.Gravity = st.grav
-        st.grav = nil
-    end
-    if Ex.Fun_Time then
-        if not st.clock then st.clock = Lighting.ClockTime end
-        Lighting.ClockTime = tonumber(Ex.Fun_TimeVal) or 12
-    elseif st.clock then
-        Lighting.ClockTime = st.clock
-        st.clock = nil
-    end
-end))
-
-H.OnCleanup(function()
-    removeTool()
-    if st.grav then workspace.Gravity = st.grav end
-    if st.clock then Lighting.ClockTime = st.clock end
-end)
-end)()
-
-----------------------------------------------------
--- KEYBINDS + FLOATING BUTTONS for the new features
-----------------------------------------------------
-print("[SAHUR] Loading Extra Keybinds")
-;(function()
-local H = FX.H
-
-KeybindsTab:Section({ Title = "Movement Keys" })
-AddKeybind(KeybindsTab, "Key_Fly", "Toggle Fly", Msg("Turns Fly on or off (default: F).", "Activa o desactiva el vuelo (por defecto: F)."),
-    "F", function() H.Toggle("Fly") end)
-AddKeybind(KeybindsTab, "Key_Noclip", "Toggle Noclip", Msg("Turns Noclip on or off (default: N).", "Activa o desactiva el Noclip (por defecto: N)."),
-    "N", function() H.Toggle("Noclip") end)
-AddKeybind(KeybindsTab, "Key_Speed", "Toggle Speed", Msg("Turns Speed Boost on or off (default: V).", "Activa o desactiva la velocidad (por defecto: V)."),
-    "V", function() H.Toggle("Speed") end)
-
-KeybindsTab:Section({ Title = "Combat Keys" })
-AddKeybind(KeybindsTab, "Key_Kill", "Kill All", Msg("Runs Kill All (default: K).", "Ejecuta el Kill All (por defecto: K)."),
-    "K", function() H.KillAll() end)
-AddKeybind(KeybindsTab, "Key_Shoot", "Shoot Murderer", Msg("Shoots the revealed Murderer (default: T).", "Dispara al Asesino revelado (por defecto: T)."),
-    "T", function() H.ShootMurderer() end)
-AddKeybind(KeybindsTab, "Key_Grab", "Grab Gun", Msg("Grabs the dropped gun (default: G).", "Agarra el arma caída (por defecto: G)."),
-    "G", function() H.GrabGun() end)
-
-KeybindsTab:Section({ Title = "Farm Keys" })
-AddKeybind(KeybindsTab, "Key_Farm", "Toggle Auto Farm", Msg("Turns the coin autofarm on or off (default: J).", "Activa o desactiva el autofarmeo (por defecto: J)."),
-    "J", function() H.Toggle("Farm_Coins") end)
-
-KeybindsTab:Section({ Title = "More Floating Buttons" })
-AddToggle(KeybindsTab, "BtnFly", "Fly Button", Msg("Floating button for Fly.", "Botón flotante del vuelo."), false, function() FX.UpdateButtons() end)
-AddToggle(KeybindsTab, "BtnSpeed", "Speed Button", Msg("Floating button for Speed Boost.", "Botón flotante de la velocidad."), false, function() FX.UpdateButtons() end)
-AddToggle(KeybindsTab, "BtnFarm", "Farm Button", Msg("Floating button for the autofarm.", "Botón flotante del autofarmeo."), false, function() FX.UpdateButtons() end)
-AddToggle(KeybindsTab, "BtnKill", "Kill Button", Msg("Floating button for Kill All.", "Botón flotante del Kill All."), false, function() FX.UpdateButtons() end)
-AddToggle(KeybindsTab, "BtnShoot", "Shoot Button", Msg("Floating button to shoot the Murderer.", "Botón flotante para disparar al Asesino."), false, function() FX.UpdateButtons() end)
-AddToggle(KeybindsTab, "BtnGrab", "Grab Button", Msg("Floating button to grab the dropped gun.", "Botón flotante para agarrar el arma caída."), false, function() FX.UpdateButtons() end)
-
-MakeFloat("FLY", -70, function() H.Toggle("Fly") end, function() return Ex.Fly end, "BtnFly", -122)
-MakeFloat("SPD", -15, function() H.Toggle("Speed") end, function() return Ex.Speed end, "BtnSpeed", -122)
-MakeFloat("FRM", 40, function() H.Toggle("Farm_Coins") end, function() return Ex.Farm_Coins end, "BtnFarm", -122)
-MakeFloat("KILL", -70, function() H.KillAll() end, function() return false end, "BtnKill", -178)
-MakeFloat("SHT", -15, function() H.ShootMurderer() end, function() return H.Holding("Gun") end, "BtnShoot", -178)
-MakeFloat("GUN", 40, function() H.GrabGun() end, function() return H.FindGunDrop() ~= nil end, "BtnGrab", -178)
-FX.UpdateButtons()
-end)()
-
 
 ----------------------------------------------------
 -- CONFIG SYSTEM
